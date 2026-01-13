@@ -27,6 +27,8 @@ public class LuaProtobuf : ModuleRules
 #endif
         bUseUnity = false;
         PCHUsage = PCHUsageMode.NoSharedPCHs;
+        PrivatePCHHeaderFile = "Private/LuaProtobufPrivatePCH.h";
+        
 #if UE_5_7_OR_LATER
         CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Off;
 #else
