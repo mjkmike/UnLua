@@ -1,15 +1,15 @@
 // Tencent is pleased to support the open source community by making UnLua available.
-// 
+//
 // Copyright (C) 2019 Tencent. All rights reserved.
 //
-// Licensed under the MIT License (the "License"); 
+// Licensed under the MIT License (the "License");
 // you may not use this file except in compliance with the License. You may obtain a copy of the License at
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, 
-// software distributed under the License is distributed on an "AS IS" BASIS, 
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
 #include "PropertyDesc.h"
@@ -21,7 +21,7 @@
 #include "Containers/LuaMap.h"
 #include "ObjectReferencer.h"
 
-FPropertyDesc::FPropertyDesc(FProperty *InProperty) : Property(InProperty) 
+FPropertyDesc::FPropertyDesc(FProperty *InProperty) : Property(InProperty)
 {
     PropertyType = CPT_None;
     PropertyPtr = InProperty;
@@ -32,7 +32,7 @@ bool FPropertyDesc::IsValid() const
 {
     if (!PropertyPtr.IsValid())
         return false;
-    
+
 #if ENGINE_MAJOR_VERSION <= 4 && ENGINE_MINOR_VERSION < 25
     return UnLua::IsUObjectValid(Property);
 #else
@@ -41,34 +41,34 @@ bool FPropertyDesc::IsValid() const
     switch (PropertyType)
     {
     case CPT_Interface:
-        {
-            bValid = UnLua::IsUObjectValid(((FInterfaceProperty*)Property)->InterfaceClass);
-            break;
-        }
+    {
+        bValid = UnLua::IsUObjectValid(((FInterfaceProperty *)Property)->InterfaceClass);
+        break;
+    }
     case CPT_Delegate:
-        {
-            bValid = UnLua::IsUObjectValid(((FDelegateProperty*)Property)->SignatureFunction);
-            break;
-        }
+    {
+        bValid = UnLua::IsUObjectValid(((FDelegateProperty *)Property)->SignatureFunction);
+        break;
+    }
     case CPT_MulticastDelegate:
     case CPT_MulticastSparseDelegate:
-        {
-            bValid = UnLua::IsUObjectValid(((FMulticastDelegateProperty*)Property)->SignatureFunction);
-            break;
-        }
+    {
+        bValid = UnLua::IsUObjectValid(((FMulticastDelegateProperty *)Property)->SignatureFunction);
+        break;
+    }
     case CPT_Struct:
-        {
-            bValid = UnLua::IsUObjectValid(((FStructProperty*)Property)->Struct);
-            break;
-        }
+    {
+        bValid = UnLua::IsUObjectValid(((FStructProperty *)Property)->Struct);
+        break;
+    }
     case CPT_ObjectReference:
     case CPT_WeakObjectReference:
     case CPT_LazyObjectReference:
     case CPT_SoftObjectReference:
-        {
-            bValid = UnLua::IsUObjectValid(((FObjectPropertyBase*)Property)->PropertyClass);
-            break;
-        }
+    {
+        bValid = UnLua::IsUObjectValid(((FObjectPropertyBase *)Property)->PropertyClass);
+        break;
+    }
     }
 
     return bValid;
@@ -87,7 +87,7 @@ public:
     {
         if (Property->ArrayDim > 1)
         {
-            PushIntegerArray(L, NumericProperty, (void*)ValuePtr);
+            PushIntegerArray(L, NumericProperty, (void *)ValuePtr);
         }
         else
         {
@@ -102,7 +102,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
@@ -139,7 +139,7 @@ public:
     {
         if (Property->ArrayDim > 1)
         {
-            PushFloatArray(L, NumericProperty, (void*)ValuePtr);
+            PushFloatArray(L, NumericProperty, (void *)ValuePtr);
         }
         else
         {
@@ -154,7 +154,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
@@ -186,7 +186,7 @@ public:
     {
         if (Property->ArrayDim > 1)
         {
-            PushEnumArray(L, EnumProperty->GetUnderlyingProperty(), (void*)ValuePtr);
+            PushEnumArray(L, EnumProperty->GetUnderlyingProperty(), (void *)ValuePtr);
         }
         else
         {
@@ -201,7 +201,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
@@ -240,13 +240,13 @@ public:
     }
 
     virtual bool SetValueInternal(lua_State *L, void *ValuePtr, int32 IndexInStack, bool bCopyValue) const override
-    {  
+    {
         BoolProperty->SetPropertyValue(ValuePtr, lua_toboolean(L, IndexInStack) != 0);
         return false;
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
@@ -273,7 +273,7 @@ public:
     {
         if (ObjectBaseProperty->PropertyClass->IsChildOf(UClass::StaticClass()))
         {
-            MetaClass = bSoftObject ? (((FSoftClassProperty*)Property)->MetaClass) : ((FClassProperty*)Property)->MetaClass;
+            MetaClass = bSoftObject ? (((FSoftClassProperty *)Property)->MetaClass) : ((FClassProperty *)Property)->MetaClass;
         }
     }
 
@@ -302,7 +302,7 @@ public:
             return false;
 
         bool bTwoLvlPtr;
-        void** Userdata = (void**)UnLua::LowLevel::GetUserdata(L, DestIndexInStack, &bTwoLvlPtr);
+        void **Userdata = (void **)UnLua::LowLevel::GetUserdata(L, DestIndexInStack, &bTwoLvlPtr);
         if (!bTwoLvlPtr || !Userdata)
             return false;
 
@@ -314,7 +314,7 @@ public:
     {
         if (Dest && Src && IsOutParameter())
         {
-            ObjectBaseProperty->SetObjectPropertyValue(Dest, *((UObject**)Src));
+            ObjectBaseProperty->SetObjectPropertyValue(Dest, *((UObject **)Src));
             return true;
         }
         return false;
@@ -324,7 +324,7 @@ public:
     {
         if (Property->ArrayDim > 1)
         {
-            PushObjectArray(L, ObjectBaseProperty, (void*)ValuePtr);
+            PushObjectArray(L, ObjectBaseProperty, (void *)ValuePtr);
         }
         else
         {
@@ -374,15 +374,15 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         UnLua::FAutoStack AutoStack(L);
-        UObject* Object = UnLua::GetUObject(L, IndexInStack);
+        UObject *Object = UnLua::GetUObject(L, IndexInStack);
         if (Object)
         {
             if (MetaClass)
             {
-                UClass* Class = Cast<UClass>(Object);
+                UClass *Class = Cast<UClass>(Object);
                 if (Class && !Class->IsChildOf(MetaClass))
                 {
                     ErrorMsg = FString::Printf(TEXT("class %s needed but got %s"), *MetaClass->GetName(), *Class->GetName());
@@ -391,7 +391,7 @@ public:
             }
             else
             {
-                UClass* Class = Object->GetClass();
+                UClass *Class = Object->GetClass();
                 if (Class && !Class->IsChildOf(ObjectBaseProperty->PropertyClass))
                 {
                     ErrorMsg = FString::Printf(TEXT("object %s needed but got %s"), *ObjectBaseProperty->PropertyClass->GetName(), *Class->GetName());
@@ -415,7 +415,7 @@ private:
 class FSoftObjectPropertyDesc : public FPropertyDesc
 {
 public:
-    explicit FSoftObjectPropertyDesc(FProperty* InProperty)
+    explicit FSoftObjectPropertyDesc(FProperty *InProperty)
         : FPropertyDesc(InProperty)
     {
     }
@@ -425,33 +425,33 @@ public:
         // release element property descriptor
     }
 
-    virtual bool CopyBack(lua_State* L, int32 SrcIndexInStack, void* DestContainerPtr) override
+    virtual bool CopyBack(lua_State *L, int32 SrcIndexInStack, void *DestContainerPtr) override
     {
-        void* Value = GetCppInstanceFast(L, SrcIndexInStack);
+        void *Value = GetCppInstanceFast(L, SrcIndexInStack);
         return Value ? CopyBack(Property->ContainerPtrToValuePtr<void>(DestContainerPtr), Value) : false;
     }
 
-    virtual bool CopyBack(lua_State* L, void* SrcContainerPtr, int32 DestIndexInStack) override
+    virtual bool CopyBack(lua_State *L, void *SrcContainerPtr, int32 DestIndexInStack) override
     {
-        void* Value = GetCppInstanceFast(L, DestIndexInStack);
+        void *Value = GetCppInstanceFast(L, DestIndexInStack);
         return Value ? CopyBack(Value, Property->ContainerPtrToValuePtr<void>(SrcContainerPtr)) : false;
     }
 
-    virtual bool CopyBack(void* Dest, const void* Src) override
+    virtual bool CopyBack(void *Dest, const void *Src) override
     {
         if (Dest && Src && IsOutParameter())
         {
-            FMemory::Memcpy(Dest, Src, Property->GetSize());        // shallow copy is enough
+            FMemory::Memcpy(Dest, Src, Property->GetSize()); // shallow copy is enough
             return true;
         }
         return false;
     }
 
-    virtual void GetValueInternal(lua_State* L, const void* ValuePtr, bool bCreateCopy) const override
+    virtual void GetValueInternal(lua_State *L, const void *ValuePtr, bool bCreateCopy) const override
     {
         if (bCreateCopy)
         {
-            void* Userdata = NewUserdataWithPadding(L, Property->GetSize(), "FSoftObjectPtr", 0);
+            void *Userdata = NewUserdataWithPadding(L, Property->GetSize(), "FSoftObjectPtr", 0);
             Property->InitializeValue(Userdata);
             Property->CopySingleValue(Userdata, ValuePtr);
         }
@@ -459,23 +459,23 @@ public:
         {
             if (Property->ArrayDim > 1)
             {
-                PushStructArray(L, Property, (void*)ValuePtr, "FSoftObjectPtr");
+                PushStructArray(L, Property, (void *)ValuePtr, "FSoftObjectPtr");
             }
             else
             {
-                UnLua::PushPointer(L, (void*)ValuePtr, "FSoftObjectPtr", false);
+                UnLua::PushPointer(L, (void *)ValuePtr, "FSoftObjectPtr", false);
             }
         }
     }
 
-    virtual bool SetValueInternal(lua_State* L, void* ValuePtr, int32 IndexInStack, bool bCopyValue) const override
+    virtual bool SetValueInternal(lua_State *L, void *ValuePtr, int32 IndexInStack, bool bCopyValue) const override
     {
-        void* Value = GetCppInstanceFast(L, IndexInStack);
+        void *Value = GetCppInstanceFast(L, IndexInStack);
         if (Value)
         {
             if (!bCopyValue && Property->HasAnyPropertyFlags(CPF_OutParm))
             {
-                FMemory::Memcpy(ValuePtr, Value, Property->GetSize());           // shallow copy
+                FMemory::Memcpy(ValuePtr, Value, Property->GetSize()); // shallow copy
                 return false;
             }
             else
@@ -487,7 +487,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         UnLua::FAutoStack AutoStack(L);
 
@@ -542,7 +542,7 @@ public:
     {
         if (Property->ArrayDim > 1)
         {
-            PushInterfaceArray(L, InterfaceProperty, (void*)ValuePtr);
+            PushInterfaceArray(L, InterfaceProperty, (void *)ValuePtr);
         }
         else
         {
@@ -553,7 +553,7 @@ public:
 
     virtual bool SetValueInternal(lua_State *L, void *ValuePtr, int32 IndexInStack, bool bCopyValue) const override
     {
-        FScriptInterface *Interface = (FScriptInterface*)ValuePtr;
+        FScriptInterface *Interface = (FScriptInterface *)ValuePtr;
         UObject *Value = UnLua::GetUObject(L, IndexInStack);
         Interface->SetObject(Value);
         Interface->SetInterface(Value ? Value->GetInterfaceAddress(InterfaceProperty->InterfaceClass) : nullptr);
@@ -561,16 +561,15 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         UnLua::FAutoStack AutoStack(L);
 
-        UObject* Object = UnLua::GetUObject(L, IndexInStack);
+        UObject *Object = UnLua::GetUObject(L, IndexInStack);
         if (Object)
         {
-            UClass* Class = Object->GetClass();
-            if ((Class)
-                && (!Class->ImplementsInterface(InterfaceProperty->InterfaceClass)))
+            UClass *Class = Object->GetClass();
+            if ((Class) && (!Class->ImplementsInterface(InterfaceProperty->InterfaceClass)))
             {
                 ErrorMsg = FString::Printf(TEXT("implements of interface %s is needed but got nil for object %s"), *InterfaceProperty->InterfaceClass->GetName(), *Class->GetName());
                 return false;
@@ -594,7 +593,7 @@ public:
     {
         if (Property->ArrayDim > 1)
         {
-            PushFNameArray(L, NameProperty, (void*)ValuePtr);
+            PushFNameArray(L, NameProperty, (void *)ValuePtr);
         }
         else
         {
@@ -609,7 +608,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
@@ -638,7 +637,7 @@ public:
     {
         if (Property->ArrayDim > 1)
         {
-            PushFStringArray(L, StringProperty, (void*)ValuePtr);
+            PushFStringArray(L, StringProperty, (void *)ValuePtr);
         }
         else
         {
@@ -653,7 +652,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
@@ -676,20 +675,20 @@ public:
 class FTextPropertyDesc : public FPropertyDesc
 {
 public:
-    explicit FTextPropertyDesc(FProperty* InProperty) : FPropertyDesc(InProperty) {}
+    explicit FTextPropertyDesc(FProperty *InProperty) : FPropertyDesc(InProperty) {}
 
-    virtual void GetValueInternal(lua_State* L, const void* ValuePtr, bool bCreateCopy) const override
+    virtual void GetValueInternal(lua_State *L, const void *ValuePtr, bool bCreateCopy) const override
     {
         if (Property->ArrayDim > 1)
         {
-            PushFTextArray(L, TextProperty, (void*)ValuePtr);
+            PushFTextArray(L, TextProperty, (void *)ValuePtr);
         }
         else
         {
 #if UNLUA_ENABLE_FTEXT
             const auto Text = TextProperty->GetPropertyValue(ValuePtr);
             const auto Userdata = NewTypedUserdata(L, FText);
-            const auto NewTextPtr = new(Userdata) FText;
+            const auto NewTextPtr = new (Userdata) FText;
             *NewTextPtr = Text;
 #else
             lua_pushstring(L, TCHAR_TO_UTF8(*TextProperty->GetPropertyValue(ValuePtr).ToString()));
@@ -697,10 +696,10 @@ public:
         }
     }
 
-    virtual bool SetValueInternal(lua_State* L, void* ValuePtr, int32 IndexInStack, bool bCopyValue) const override
+    virtual bool SetValueInternal(lua_State *L, void *ValuePtr, int32 IndexInStack, bool bCopyValue) const override
     {
 #if UNLUA_ENABLE_FTEXT
-        TextProperty->SetPropertyValue(ValuePtr, *(FText*)GetCppInstanceFast(L, IndexInStack));
+        TextProperty->SetPropertyValue(ValuePtr, *(FText *)GetCppInstanceFast(L, IndexInStack));
 #else
         TextProperty->SetPropertyValue(ValuePtr, FText::FromString(UTF8_TO_TCHAR(lua_tostring(L, IndexInStack))));
 #endif
@@ -708,7 +707,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         const auto Type = lua_type(L, IndexInStack);
 #if UNLUA_ENABLE_FTEXT
@@ -717,7 +716,7 @@ public:
             ErrorMsg = FString::Printf(TEXT("userdata is needed but got %s"), UTF8_TO_TCHAR(lua_typename(L, Type)));
             return false;
         }
-        return true;        
+        return true;
 #else
         if (Type == LUA_TNIL || (Type == LUA_TSTRING || Type == LUA_TNUMBER))
             return true;
@@ -736,17 +735,18 @@ class FArrayPropertyDesc : public FPropertyDesc, public TLuaContainerInterface<F
 public:
     explicit FArrayPropertyDesc(FProperty *InProperty)
         : FPropertyDesc(InProperty), InnerProperty(FPropertyDesc::Create(ArrayProperty->Inner))
-    {}
+    {
+    }
 
     virtual bool CopyBack(lua_State *L, int32 SrcIndexInStack, void *DestContainerPtr) override
     {
-        FScriptArray *Src = (FScriptArray*)GetScriptContainer(L, SrcIndexInStack);
+        FScriptArray *Src = (FScriptArray *)GetScriptContainer(L, SrcIndexInStack);
         return Src ? CopyBack(Property->ContainerPtrToValuePtr<void>(DestContainerPtr), Src) : false;
     }
 
     virtual bool CopyBack(lua_State *L, void *SrcContainerPtr, int32 DestIndexInStack) override
     {
-        FScriptArray *Dest = (FScriptArray*)GetScriptContainer(L, DestIndexInStack);
+        FScriptArray *Dest = (FScriptArray *)GetScriptContainer(L, DestIndexInStack);
         return Dest ? CopyBack(Dest, Property->ContainerPtrToValuePtr<void>(SrcContainerPtr)) : false;
     }
 
@@ -754,8 +754,8 @@ public:
     {
         if (Dest && Src && IsOutParameter())
         {
-            FMemory::Memcpy(Dest, Src, sizeof(FScriptArray));        // shallow copy is enough
-            //ArrayProperty->CopyCompleteValue(Dest, Src);
+            FMemory::Memcpy(Dest, Src, sizeof(FScriptArray)); // shallow copy is enough
+            // ArrayProperty->CopyCompleteValue(Dest, Src);
             return true;
         }
         return false;
@@ -763,17 +763,17 @@ public:
 
     virtual void GetValueInternal(lua_State *L, const void *ValuePtr, bool bCreateCopy) const override
     {
-        const auto& Registry = UnLua::FLuaEnv::FindEnvChecked(L).GetContainerRegistry();
+        const auto &Registry = UnLua::FLuaEnv::FindEnvChecked(L).GetContainerRegistry();
         FScriptArray *ScriptArray;
         if (bCreateCopy)
         {
-            const auto LuaArray = Registry->NewArray(L, InnerProperty, FLuaArray::OwnedBySelf); 
+            const auto LuaArray = Registry->NewArray(L, InnerProperty, FLuaArray::OwnedBySelf);
             ScriptArray = LuaArray->GetContainerPtr();
             ArrayProperty->CopyCompleteValue(ScriptArray, ValuePtr);
         }
         else
         {
-            ScriptArray = (FScriptArray*)(&ArrayProperty->GetPropertyValue(ValuePtr));
+            ScriptArray = (FScriptArray *)(&ArrayProperty->GetPropertyValue(ValuePtr));
             Registry->FindOrAdd(L, ScriptArray, InnerProperty);
         }
     }
@@ -785,17 +785,17 @@ public:
         {
             FScriptArray ScriptArray;
             FLuaArray LuaArray(&ScriptArray, InnerProperty, FLuaArray::OwnedByOther);
-            TraverseTable(L, IndexInStack, &LuaArray, FArrayPropertyDesc::FillArray);       // fill table elements
+            TraverseTable(L, IndexInStack, &LuaArray, FArrayPropertyDesc::FillArray); // fill table elements
             ArrayProperty->CopyCompleteValue(ValuePtr, &ScriptArray);
         }
         else if (Type == LUA_TUSERDATA)
         {
-            FLuaArray* Src = (FLuaArray*)lua_touserdata(L, IndexInStack);
+            FLuaArray *Src = (FLuaArray *)lua_touserdata(L, IndexInStack);
             if (Src)
             {
                 if (!bCopyValue && Property->HasAnyPropertyFlags(CPF_OutParm))
                 {
-                    if (Src->ElementSize < ArrayProperty->Inner->ElementSize)
+                    if (Src->ElementSize < ArrayProperty->Inner->GetElementSize())
                     {
                         FScriptArrayHelper Helper(ArrayProperty, ValuePtr);
                         if (Src->Num() > 0)
@@ -803,7 +803,7 @@ public:
                             Helper.AddValues(Src->Num());
                             for (int32 ArrayIndex = 0; ArrayIndex < Src->Num(); ArrayIndex++)
                             {
-                                void* Dst = Helper.GetRawPtr(ArrayIndex);
+                                void *Dst = Helper.GetRawPtr(ArrayIndex);
                                 Src->Get(ArrayIndex, Dst);
                             }
                         }
@@ -817,7 +817,7 @@ public:
                 else
                 {
                     ArrayProperty->CopyCompleteValue(ValuePtr, Src->ScriptArray);
-                    //ArrayProperty->SetPropertyValue(ValuePtr, *LuaArray->ScriptArray);    // copy constructor of FScriptArray doesn't work
+                    // ArrayProperty->SetPropertyValue(ValuePtr, *LuaArray->ScriptArray);    // copy constructor of FScriptArray doesn't work
                 }
             }
         }
@@ -825,15 +825,14 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         UnLua::FAutoStack AutoStack(L);
 
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
         {
-            if ((Type != LUA_TTABLE)
-                && (Type != LUA_TUSERDATA))
+            if ((Type != LUA_TTABLE) && (Type != LUA_TUSERDATA))
             {
                 ErrorMsg = FString::Printf(TEXT("table or userdata needed but got %s"), UTF8_TO_TCHAR(lua_typename(L, Type)));
                 return false;
@@ -868,7 +867,7 @@ public:
     virtual TSharedPtr<UnLua::ITypeInterface> GetExtraInterface() const override { return TSharedPtr<UnLua::ITypeInterface>(); }
     static bool FillArray(lua_State *L, void *Userdata)
     {
-        FLuaArray *Array = (FLuaArray*)Userdata;
+        FLuaArray *Array = (FLuaArray *)Userdata;
         int32 Index = Array->AddDefaulted();
         uint8 *Data = Array->GetData(Index);
         Array->Inner->WriteValue_InContainer(L, Data, -1);
@@ -879,7 +878,6 @@ private:
     TSharedPtr<UnLua::ITypeInterface> InnerProperty;
 };
 
-
 /**
  * TMap property descriptor
  */
@@ -888,17 +886,18 @@ class FMapPropertyDesc : public FPropertyDesc, public TLuaContainerInterface<FLu
 public:
     explicit FMapPropertyDesc(FProperty *InProperty)
         : FPropertyDesc(InProperty), KeyProperty(FPropertyDesc::Create(MapProperty->KeyProp)), ValueProperty(FPropertyDesc::Create(MapProperty->ValueProp))
-    {}
+    {
+    }
 
     virtual bool CopyBack(lua_State *L, int32 SrcIndexInStack, void *DestContainerPtr) override
     {
-        FScriptMap *Src = (FScriptMap*)GetScriptContainer(L, SrcIndexInStack);
+        FScriptMap *Src = (FScriptMap *)GetScriptContainer(L, SrcIndexInStack);
         return Src ? CopyBack(Property->ContainerPtrToValuePtr<void>(DestContainerPtr), Src) : false;
     }
 
     virtual bool CopyBack(lua_State *L, void *SrcContainerPtr, int32 DestIndexInStack) override
     {
-        FScriptMap *Dest = (FScriptMap*)GetScriptContainer(L, DestIndexInStack);
+        FScriptMap *Dest = (FScriptMap *)GetScriptContainer(L, DestIndexInStack);
         return Dest ? CopyBack(Dest, Property->ContainerPtrToValuePtr<void>(SrcContainerPtr)) : false;
     }
 
@@ -906,8 +905,8 @@ public:
     {
         if (Dest && Src && IsOutParameter())
         {
-            FMemory::Memcpy(Dest, Src, sizeof(FScriptMap));        // shallow copy is enough
-            //MapProperty->CopyCompleteValue(Dest, Src);
+            FMemory::Memcpy(Dest, Src, sizeof(FScriptMap)); // shallow copy is enough
+            // MapProperty->CopyCompleteValue(Dest, Src);
             return true;
         }
         return false;
@@ -915,7 +914,7 @@ public:
 
     virtual void GetValueInternal(lua_State *L, const void *ValuePtr, bool bCreateCopy) const override
     {
-        const auto& Registry = UnLua::FLuaEnv::FindEnvChecked(L).GetContainerRegistry();
+        const auto &Registry = UnLua::FLuaEnv::FindEnvChecked(L).GetContainerRegistry();
         FScriptMap *ScriptMap;
         if (bCreateCopy)
         {
@@ -925,7 +924,7 @@ public:
         }
         else
         {
-            ScriptMap = (FScriptMap*)&MapProperty->GetPropertyValue(ValuePtr);
+            ScriptMap = (FScriptMap *)&MapProperty->GetPropertyValue(ValuePtr);
             Registry->FindOrAdd(L, ScriptMap, KeyProperty, ValueProperty);
         }
     }
@@ -942,12 +941,12 @@ public:
         }
         else if (Type == LUA_TUSERDATA)
         {
-            FLuaMap *LuaMap = (FLuaMap*)GetCppInstanceFast(L, IndexInStack);
+            FLuaMap *LuaMap = (FLuaMap *)GetCppInstanceFast(L, IndexInStack);
             if (LuaMap)
             {
                 if (!bCopyValue && Property->HasAnyPropertyFlags(CPF_OutParm))
                 {
-                    FMemory::Memcpy(ValuePtr, LuaMap->Map, sizeof(FScriptMap));     // shallow copy
+                    FMemory::Memcpy(ValuePtr, LuaMap->Map, sizeof(FScriptMap)); // shallow copy
                     return false;
                 }
                 else
@@ -960,15 +959,14 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         UnLua::FAutoStack AutoStack(L);
 
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
         {
-            if ((Type != LUA_TTABLE)
-                && (Type != LUA_TUSERDATA))
+            if ((Type != LUA_TTABLE) && (Type != LUA_TUSERDATA))
             {
                 ErrorMsg = FString::Printf(TEXT("table or userdata needed but got %s"), UTF8_TO_TCHAR(lua_typename(L, Type)));
                 return false;
@@ -1003,8 +1001,8 @@ public:
     virtual TSharedPtr<UnLua::ITypeInterface> GetExtraInterface() const override { return ValueProperty; }
     static bool FillMap(lua_State *L, void *Userdata)
     {
-        FLuaMap *Map = (FLuaMap*)Userdata;
-        void *ValueCache = (uint8*)Map->ElementCache + Map->MapLayout.ValueOffset;
+        FLuaMap *Map = (FLuaMap *)Userdata;
+        void *ValueCache = (uint8 *)Map->ElementCache + Map->MapLayout.ValueOffset;
         Map->KeyInterface->Initialize(Map->ElementCache);
         Map->ValueInterface->Initialize(ValueCache);
         Map->KeyInterface->WriteValue_InContainer(L, Map->ElementCache, -2);
@@ -1026,17 +1024,18 @@ class FSetPropertyDesc : public FPropertyDesc, public TLuaContainerInterface<FLu
 public:
     explicit FSetPropertyDesc(FProperty *InProperty)
         : FPropertyDesc(InProperty), InnerProperty(FPropertyDesc::Create(SetProperty->ElementProp))
-    {}
+    {
+    }
 
     virtual bool CopyBack(lua_State *L, int32 SrcIndexInStack, void *DestContainerPtr) override
     {
-        FScriptSet *Src = (FScriptSet*)GetScriptContainer(L, SrcIndexInStack);
+        FScriptSet *Src = (FScriptSet *)GetScriptContainer(L, SrcIndexInStack);
         return Src ? CopyBack(Property->ContainerPtrToValuePtr<void>(DestContainerPtr), Src) : false;
     }
 
     virtual bool CopyBack(lua_State *L, void *SrcContainerPtr, int32 DestIndexInStack) override
     {
-        FScriptSet *Dest = (FScriptSet*)GetScriptContainer(L, DestIndexInStack);
+        FScriptSet *Dest = (FScriptSet *)GetScriptContainer(L, DestIndexInStack);
         return Dest ? CopyBack(Dest, Property->ContainerPtrToValuePtr<void>(SrcContainerPtr)) : false;
     }
 
@@ -1044,8 +1043,8 @@ public:
     {
         if (Dest && Src && IsOutParameter())
         {
-            FMemory::Memcpy(Dest, Src, sizeof(FScriptSet));        // shallow copy is enough
-            //SetProperty->CopyCompleteValue(Dest, Src);
+            FMemory::Memcpy(Dest, Src, sizeof(FScriptSet)); // shallow copy is enough
+            // SetProperty->CopyCompleteValue(Dest, Src);
             return true;
         }
         return false;
@@ -1053,17 +1052,17 @@ public:
 
     virtual void GetValueInternal(lua_State *L, const void *ValuePtr, bool bCreateCopy) const override
     {
-        const auto& Registry = UnLua::FLuaEnv::FindEnvChecked(L).GetContainerRegistry();
+        const auto &Registry = UnLua::FLuaEnv::FindEnvChecked(L).GetContainerRegistry();
         FScriptSet *ScriptSet;
         if (bCreateCopy)
         {
-            const auto LuaSet = Registry->NewSet(L, InnerProperty, FLuaSet::OwnedBySelf); 
+            const auto LuaSet = Registry->NewSet(L, InnerProperty, FLuaSet::OwnedBySelf);
             ScriptSet = LuaSet->GetContainerPtr();
             SetProperty->CopyCompleteValue(ScriptSet, ValuePtr);
         }
         else
         {
-            ScriptSet = (FScriptSet*)(&SetProperty->GetPropertyValue(ValuePtr));
+            ScriptSet = (FScriptSet *)(&SetProperty->GetPropertyValue(ValuePtr));
             Registry->FindOrAdd(L, ScriptSet, InnerProperty);
         }
     }
@@ -1080,12 +1079,12 @@ public:
         }
         else if (Type == LUA_TUSERDATA)
         {
-            FLuaSet *LuaSet = (FLuaSet*)GetCppInstanceFast(L, IndexInStack);
+            FLuaSet *LuaSet = (FLuaSet *)GetCppInstanceFast(L, IndexInStack);
             if (LuaSet)
             {
                 if (!bCopyValue && Property->HasAnyPropertyFlags(CPF_OutParm))
                 {
-                    FMemory::Memcpy(ValuePtr, LuaSet->Set, sizeof(FScriptSet));     // shallow copy
+                    FMemory::Memcpy(ValuePtr, LuaSet->Set, sizeof(FScriptSet)); // shallow copy
                     return false;
                 }
                 else
@@ -1098,15 +1097,14 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         UnLua::FAutoStack AutoStack(L);
 
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
         {
-            if ((Type != LUA_TTABLE)
-                && (Type != LUA_TUSERDATA))
+            if ((Type != LUA_TTABLE) && (Type != LUA_TUSERDATA))
             {
                 ErrorMsg = FString::Printf(TEXT("table or userdata needed but got %s"), UTF8_TO_TCHAR(lua_typename(L, Type)));
                 return false;
@@ -1141,7 +1139,7 @@ public:
     virtual TSharedPtr<UnLua::ITypeInterface> GetExtraInterface() const override { return TSharedPtr<UnLua::ITypeInterface>(); }
     static bool FillSet(lua_State *L, void *Userdata)
     {
-        FLuaSet *Set = (FLuaSet*)Userdata;
+        FLuaSet *Set = (FLuaSet *)Userdata;
         Set->ElementInterface->Initialize(Set->ElementCache);
         Set->ElementInterface->WriteValue_InContainer(L, Set->ElementCache, -1);
         Set->Add(Set->ElementCache);
@@ -1165,14 +1163,14 @@ int8 FPropertyDesc::GetPropertyType()
 class FStructPropertyDesc : public FPropertyDesc
 {
 public:
-	explicit FStructPropertyDesc(FProperty* InProperty)
-		: FPropertyDesc(InProperty), bFirstPropOfScriptStruct(GetPropertyOuter(Property)->IsA<UScriptStruct>() && Property->GetOffset_ForInternal() == 0)
-	{}
+    explicit FStructPropertyDesc(FProperty *InProperty)
+        : FPropertyDesc(InProperty), bFirstPropOfScriptStruct(GetPropertyOuter(Property)->IsA<UScriptStruct>() && Property->GetOffset_ForInternal() == 0)
+    {
+    }
 
 protected:
-	bool bFirstPropOfScriptStruct;
+    bool bFirstPropOfScriptStruct;
 };
-
 
 /**
  * ScriptStruct property descriptor
@@ -1228,11 +1226,11 @@ public:
         {
             if (Property->ArrayDim > 1)
             {
-                PushStructArray(L, Property, (void*)ValuePtr, StructName.Get());
+                PushStructArray(L, Property, (void *)ValuePtr, StructName.Get());
             }
             else
             {
-                UnLua::PushPointer(L, (void*)ValuePtr, StructName.Get(), bFirstPropOfScriptStruct);
+                UnLua::PushPointer(L, (void *)ValuePtr, StructName.Get(), bFirstPropOfScriptStruct);
             }
         }
     }
@@ -1244,7 +1242,7 @@ public:
         {
             if (!bCopyValue && Property->HasAnyPropertyFlags(CPF_OutParm))
             {
-                FMemory::Memcpy(ValuePtr, Value, StructSize);           // shallow copy
+                FMemory::Memcpy(ValuePtr, Value, StructSize); // shallow copy
                 return false;
             }
             else
@@ -1256,7 +1254,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         UnLua::FAutoStack AutoStack(L);
         int32 Type = lua_type(L, IndexInStack);
@@ -1276,24 +1274,24 @@ public:
 
             lua_pushstring(L, "__name");
             lua_rawget(L, -2);
-            const char* MetatableName = lua_tostring(L, -1);
+            const char *MetatableName = lua_tostring(L, -1);
             if (!MetatableName)
             {
                 ErrorMsg = FString::Printf(TEXT("metatable name of userdata needed but got nil"));
                 return false;
             }
 
-            FClassDesc* CurrentClassDesc = UnLua::FLuaEnv::FindEnv(L)->GetClassRegistry()->Find(MetatableName);
+            FClassDesc *CurrentClassDesc = UnLua::FLuaEnv::FindEnv(L)->GetClassRegistry()->Find(MetatableName);
             if (!CurrentClassDesc)
             {
                 ErrorMsg = FString::Printf(TEXT("metatable of userdata needed in registry but got no found"));
                 return false;
             }
 
-            UScriptStruct* ScriptStruct = CurrentClassDesc->AsScriptStruct();
+            UScriptStruct *ScriptStruct = CurrentClassDesc->AsScriptStruct();
             if (!ScriptStruct || !ScriptStruct->IsChildOf(StructProperty->Struct))
             {
-                ErrorMsg = FString::Printf(TEXT("struct %s needed but got %s"), *StructProperty->Struct->GetName(), ScriptStruct? *ScriptStruct->GetName(): TEXT("nil"));
+                ErrorMsg = FString::Printf(TEXT("struct %s needed but got %s"), *StructProperty->Struct->GetName(), ScriptStruct ? *ScriptStruct->GetName() : TEXT("nil"));
                 return false;
             }
         }
@@ -1332,8 +1330,8 @@ public:
             return;
         }
 
-        const void* ValuePtr = Property->ContainerPtrToValuePtr<void>(ContainerPtr);
-        FScriptDelegate* ScriptDelegate = (FScriptDelegate*)DelegateProperty->GetPropertyValuePtr(ValuePtr);
+        const void *ValuePtr = Property->ContainerPtrToValuePtr<void>(ContainerPtr);
+        FScriptDelegate *ScriptDelegate = (FScriptDelegate *)DelegateProperty->GetPropertyValuePtr(ValuePtr);
         UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry()->Register(ScriptDelegate, DelegateProperty, ScriptDelegate->GetUObject());
         GetValueInternal(L, ScriptDelegate, bCreateCopy);
     }
@@ -1353,15 +1351,15 @@ public:
         }
 
         auto DelegateRegistry = UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry();
-        void* ValuePtr = Property->ContainerPtrToValuePtr<void>(ContainerPtr);
-        FScriptDelegate* ScriptDelegate = DelegateProperty->GetPropertyValuePtr(ValuePtr);
+        void *ValuePtr = Property->ContainerPtrToValuePtr<void>(ContainerPtr);
+        FScriptDelegate *ScriptDelegate = DelegateProperty->GetPropertyValuePtr(ValuePtr);
 
         // https://github.com/Tencent/UnLua/issues/566
         if (Property->GetOwner<UFunction>())
         {
             ValuePtr = DelegateRegistry->Register(ScriptDelegate, DelegateProperty);
             const auto Ret = SetValueInternal(L, ValuePtr, IndexInStack, bCreateCopy);
-            *ScriptDelegate = *(FScriptDelegate*)ValuePtr;
+            *ScriptDelegate = *(FScriptDelegate *)ValuePtr;
             return Ret;
         }
 
@@ -1372,12 +1370,12 @@ public:
     virtual void GetValueInternal(lua_State *L, const void *ValuePtr, bool bCreateCopy) const override
     {
         if (Property->ArrayDim > 1)
-        {   
-            PushDelegateArray(L, DelegateProperty, (void*)ValuePtr);
+        {
+            PushDelegateArray(L, DelegateProperty, (void *)ValuePtr);
         }
         else
         {
-            FScriptDelegate *ScriptDelegate = DelegateProperty->GetPropertyValuePtr((void*)ValuePtr);
+            FScriptDelegate *ScriptDelegate = DelegateProperty->GetPropertyValuePtr((void *)ValuePtr);
             UnLua::PushPointer(L, ScriptDelegate, "FScriptDelegate", bFirstPropOfScriptStruct);
         }
     }
@@ -1393,7 +1391,7 @@ public:
             return bCopyValue;
         }
 
-        int32 FuncIdxInTable = GetDelegateInfo(L, IndexInStack, Object, CallbackFunction);      // get target UObject and Lua function
+        int32 FuncIdxInTable = GetDelegateInfo(L, IndexInStack, Object, CallbackFunction); // get target UObject and Lua function
         if (FuncIdxInTable != INDEX_NONE)
         {
             FScriptDelegate *Delegate = DelegateProperty->GetPropertyValuePtr(ValuePtr);
@@ -1405,7 +1403,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
@@ -1431,7 +1429,7 @@ class TMulticastDelegatePropertyDesc : public FStructPropertyDesc
 public:
     explicit TMulticastDelegatePropertyDesc(FProperty *InProperty) : FStructPropertyDesc(InProperty) {}
 
-    virtual void ReadValue_InContainer(lua_State *L, const void *ContainerPtr, bool bCreateCopy) const override 
+    virtual void ReadValue_InContainer(lua_State *L, const void *ContainerPtr, bool bCreateCopy) const override
     {
         if (UNLIKELY(!PropertyPtr.IsValid()))
         {
@@ -1447,13 +1445,13 @@ public:
             return;
         }
 
-        void* ValuePtr = (void*)Property->ContainerPtrToValuePtr<void>(ContainerPtr);
-        UObject* Owner = Property->GetOwnerStruct()->IsA<UClass>() ? (UObject*)ContainerPtr : nullptr;
+        void *ValuePtr = (void *)Property->ContainerPtrToValuePtr<void>(ContainerPtr);
+        UObject *Owner = Property->GetOwnerStruct()->IsA<UClass>() ? (UObject *)ContainerPtr : nullptr;
         UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry()->Register(ValuePtr, DelegateProperty, Owner);
         GetValueInternal(L, ValuePtr, bCreateCopy);
     }
 
-    virtual bool WriteValue_InContainer(lua_State *L, void *ContainerPtr, int32 IndexInStack, bool bCreateCopy) const override 
+    virtual bool WriteValue_InContainer(lua_State *L, void *ContainerPtr, int32 IndexInStack, bool bCreateCopy) const override
     {
         if (UNLIKELY(!PropertyPtr.IsValid()))
         {
@@ -1468,8 +1466,8 @@ public:
             return false;
         }
 
-        void* ValuePtr = Property->ContainerPtrToValuePtr<void>(ContainerPtr);
-        UObject* Owner = Property->GetOwnerStruct()->IsA<UClass>() ? (UObject*)ContainerPtr : nullptr;
+        void *ValuePtr = Property->ContainerPtrToValuePtr<void>(ContainerPtr);
+        UObject *Owner = Property->GetOwnerStruct()->IsA<UClass>() ? (UObject *)ContainerPtr : nullptr;
         UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry()->Register(ValuePtr, DelegateProperty, Owner);
         return SetValueInternal(L, ValuePtr, IndexInStack, bCreateCopy);
     }
@@ -1478,11 +1476,11 @@ public:
     {
         if (Property->ArrayDim > 1)
         {
-            PushMCDelegateArray(L, MulticastDelegateProperty, (void*)ValuePtr, TMulticastDelegateTraits<T>::GetName());
+            PushMCDelegateArray(L, MulticastDelegateProperty, (void *)ValuePtr, TMulticastDelegateTraits<T>::GetName());
         }
         else
         {
-            T *ScriptDelegate = (T*)ValuePtr;
+            T *ScriptDelegate = (T *)ValuePtr;
             UnLua::PushPointer(L, ScriptDelegate, TMulticastDelegateTraits<T>::GetName(), bFirstPropOfScriptStruct);
         }
     }
@@ -1497,12 +1495,12 @@ public:
             UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry()->Bind(L, IndexInStack, Delegate, Object);
             return bCopyValue;
         }
-        
-        int32 FuncIdxInTable = GetDelegateInfo(L, IndexInStack, Object, CallbackFunction);      // get target UObject and Lua function
+
+        int32 FuncIdxInTable = GetDelegateInfo(L, IndexInStack, Object, CallbackFunction); // get target UObject and Lua function
 
         if (FuncIdxInTable != INDEX_NONE)
         {
-            T *ScriptDelegate = (T*)ValuePtr;
+            T *ScriptDelegate = (T *)ValuePtr;
             const auto Registry = UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry();
             Registry->Register(ScriptDelegate, MulticastDelegateProperty, Object);
             lua_rawgeti(L, IndexInStack, FuncIdxInTable);
@@ -1513,7 +1511,7 @@ public:
     }
 
 #if ENABLE_TYPE_CHECK == 1
-    virtual bool CheckPropertyType(lua_State* L, int32 IndexInStack, FString& ErrorMsg, void* UserData)
+    virtual bool CheckPropertyType(lua_State *L, int32 IndexInStack, FString &ErrorMsg, void *UserData)
     {
         int32 Type = lua_type(L, IndexInStack);
         if (Type != LUA_TNIL)
@@ -1530,21 +1528,20 @@ public:
 #endif
 };
 
-
 /**
  * Create a property descriptor
  */
-FPropertyDesc* FPropertyDesc::Create(FProperty *InProperty)
+FPropertyDesc *FPropertyDesc::Create(FProperty *InProperty)
 {
     // #lizard forgives
 
-    FPropertyDesc* PropertyDesc = nullptr;
+    FPropertyDesc *PropertyDesc = nullptr;
     int32 Type = ::GetPropertyType(InProperty);
     switch (Type)
     {
     case CPT_Byte:
     {
-        const FByteProperty* TempByteProperty = CastField<FByteProperty>(InProperty);
+        const FByteProperty *TempByteProperty = CastField<FByteProperty>(InProperty);
         if (TempByteProperty->Enum)
         {
         }
@@ -1556,101 +1553,101 @@ FPropertyDesc* FPropertyDesc::Create(FProperty *InProperty)
     case CPT_UInt16:
     case CPT_UInt32:
     case CPT_UInt64:
-        {
-		    PropertyDesc = new FIntegerPropertyDesc(InProperty);
-		    break;
-        }
+    {
+        PropertyDesc = new FIntegerPropertyDesc(InProperty);
+        break;
+    }
     case CPT_Float:
     case CPT_Double:
-        {
-            PropertyDesc = new FFloatPropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FFloatPropertyDesc(InProperty);
+        break;
+    }
     case CPT_Enum:
-        {
-            PropertyDesc = new FEnumPropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FEnumPropertyDesc(InProperty);
+        break;
+    }
     case CPT_Bool:
-        {
-		    PropertyDesc = new FBoolPropertyDesc(InProperty);
-		    break;
-        }
+    {
+        PropertyDesc = new FBoolPropertyDesc(InProperty);
+        break;
+    }
     case CPT_ObjectReference:
     case CPT_WeakObjectReference:
     case CPT_LazyObjectReference:
-        {
-		    PropertyDesc = new FObjectPropertyDesc(InProperty, false);
-		    break;
-        }
+    {
+        PropertyDesc = new FObjectPropertyDesc(InProperty, false);
+        break;
+    }
     case CPT_SoftObjectReference:
-        {
-            PropertyDesc = new FSoftObjectPropertyDesc(InProperty);
-			//PropertyDesc = new FObjectPropertyDesc(InProperty, true);
-            break;
-        }
-	case CPT_Interface:
-        {
-            PropertyDesc = new FInterfacePropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FSoftObjectPropertyDesc(InProperty);
+        // PropertyDesc = new FObjectPropertyDesc(InProperty, true);
+        break;
+    }
+    case CPT_Interface:
+    {
+        PropertyDesc = new FInterfacePropertyDesc(InProperty);
+        break;
+    }
     case CPT_Name:
-        {
-            PropertyDesc = new FNamePropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FNamePropertyDesc(InProperty);
+        break;
+    }
 
     case CPT_String:
-        {
-            PropertyDesc = new FStringPropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FStringPropertyDesc(InProperty);
+        break;
+    }
 
     case CPT_Text:
-        {
-            PropertyDesc = new FTextPropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FTextPropertyDesc(InProperty);
+        break;
+    }
 
     case CPT_Array:
-        {
-            PropertyDesc = new FArrayPropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FArrayPropertyDesc(InProperty);
+        break;
+    }
     case CPT_Map:
-        {
-            PropertyDesc = new FMapPropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FMapPropertyDesc(InProperty);
+        break;
+    }
     case CPT_Set:
-        {
-            PropertyDesc = new FSetPropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FSetPropertyDesc(InProperty);
+        break;
+    }
     case CPT_Struct:
-        {
-            PropertyDesc = new FScriptStructPropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FScriptStructPropertyDesc(InProperty);
+        break;
+    }
     case CPT_Delegate:
-        {
-            PropertyDesc = new FDelegatePropertyDesc(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new FDelegatePropertyDesc(InProperty);
+        break;
+    }
     case CPT_MulticastDelegate:
-        {
-            PropertyDesc = new TMulticastDelegatePropertyDesc<FMulticastScriptDelegate>(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new TMulticastDelegatePropertyDesc<FMulticastScriptDelegate>(InProperty);
+        break;
+    }
 #if ENGINE_MAJOR_VERSION > 4 || (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION > 22)
     case CPT_MulticastSparseDelegate:
-        {
-            PropertyDesc = new TMulticastDelegatePropertyDesc<FSparseDelegate>(InProperty);
-            break;
-        }
+    {
+        PropertyDesc = new TMulticastDelegatePropertyDesc<FSparseDelegate>(InProperty);
+        break;
+    }
 #endif
     }
-	
+
     if (PropertyDesc)
     {
         PropertyDesc->SetPropertyType(Type);

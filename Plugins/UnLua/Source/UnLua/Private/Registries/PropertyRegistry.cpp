@@ -10,19 +10,19 @@
 
 namespace UnLua
 {
-    FPropertyRegistry::FPropertyRegistry(FLuaEnv* Env)
+    FPropertyRegistry::FPropertyRegistry(FLuaEnv *Env)
         : Env(Env)
     {
         PropertyCollector = FindFirstObject<UScriptStruct>(TEXT("PropertyCollector"));
         check(PropertyCollector);
     }
 
-    void FPropertyRegistry::NotifyUObjectDeleted(UObject* Object)
+    void FPropertyRegistry::NotifyUObjectDeleted(UObject *Object)
     {
-        FieldProperties.Remove(static_cast<UField*>(Object));
+        FieldProperties.Remove(static_cast<UField *>(Object));
     }
 
-    TSharedPtr<ITypeInterface> FPropertyRegistry::CreateTypeInterface(lua_State* L, int32 Index)
+    TSharedPtr<ITypeInterface> FPropertyRegistry::CreateTypeInterface(lua_State *L, int32 Index)
     {
         Index = LowLevel::AbsIndex(L, Index);
 
@@ -40,50 +40,50 @@ namespace UnLua
             TypeInterface = GetStringProperty();
             break;
         case LUA_TTABLE:
+        {
+            lua_pushstring(L, "__name");
+            Type = lua_rawget(L, Index);
+            if (Type == LUA_TSTRING)
             {
-                lua_pushstring(L, "__name");
-                Type = lua_rawget(L, Index);
-                if (Type == LUA_TSTRING)
+                const char *Name = lua_tostring(L, -1);
+                auto ClassDesc = Env->GetClassRegistry()->Find(Name);
+                if (ClassDesc)
                 {
-                    const char* Name = lua_tostring(L, -1);
-                    auto ClassDesc = Env->GetClassRegistry()->Find(Name);
-                    if (ClassDesc)
-                    {
-                        TypeInterface = GetFieldProperty(ClassDesc->AsStruct());
-                    }
+                    TypeInterface = GetFieldProperty(ClassDesc->AsStruct());
+                }
+                else
+                {
+                    auto EnumDesc = Env->GetEnumRegistry()->Find(Name);
+                    if (EnumDesc)
+                        TypeInterface = GetFieldProperty(EnumDesc->GetEnum());
                     else
-                    {
-                        auto EnumDesc = Env->GetEnumRegistry()->Find(Name);
-                        if (EnumDesc)
-                            TypeInterface = GetFieldProperty(EnumDesc->GetEnum());
-                        else
-                            TypeInterface = FindTypeInterface(lua_tostring(L, -1));
-                    }
+                        TypeInterface = FindTypeInterface(lua_tostring(L, -1));
                 }
-                lua_pop(L, 1);
             }
-            break;
+            lua_pop(L, 1);
+        }
+        break;
         case LUA_TUSERDATA:
+        {
+            // mt/nil
+            lua_getmetatable(L, Index);
+            if (lua_istable(L, -1))
             {
-                // mt/nil
-                lua_getmetatable(L, Index);
-                if (lua_istable(L, -1))
+                // mt,mt.__name/nil
+                lua_getfield(L, -1, "__name");
+                if (lua_isstring(L, -1))
                 {
-                    // mt,mt.__name/nil
-                    lua_getfield(L, -1, "__name");
-                    if (lua_isstring(L, -1))
-                    {
-                        const char* Name = lua_tostring(L, -1);
-                        FClassDesc* ClassDesc = Env->GetClassRegistry()->Find(Name);
-                        if (ClassDesc)
-                            TypeInterface = GetFieldProperty(ClassDesc->AsStruct());
-                    }
-                    // mt
-                    lua_pop(L, 1);
+                    const char *Name = lua_tostring(L, -1);
+                    FClassDesc *ClassDesc = Env->GetClassRegistry()->Find(Name);
+                    if (ClassDesc)
+                        TypeInterface = GetFieldProperty(ClassDesc->AsStruct());
                 }
+                // mt
                 lua_pop(L, 1);
             }
-            break;
+            lua_pop(L, 1);
+        }
+        break;
         default:
             break;
         }
@@ -98,8 +98,7 @@ namespace UnLua
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
             const auto Property = new FBoolProperty(PropertyCollector, NAME_None, RF_Transient, 0, (EPropertyFlags)0, 0xFF, 1, true);
 #else
-            constexpr auto Params = UECodeGen_Private::FBoolPropertyParams
-            {
+            constexpr auto Params = UECodeGen_Private::FBoolPropertyParams{
                 nullptr,
                 nullptr,
                 CPF_None,
@@ -136,8 +135,7 @@ namespace UnLua
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
             const auto Property = new FIntProperty(PropertyCollector, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash);
 #else
-            constexpr auto Params = UECodeGen_Private::FIntPropertyParams
-            {
+            constexpr auto Params = UECodeGen_Private::FIntPropertyParams{
                 nullptr,
                 nullptr,
                 CPF_HasGetValueTypeHash,
@@ -172,8 +170,7 @@ namespace UnLua
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
             const auto Property = new FFloatProperty(PropertyCollector, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash);
 #else
-            constexpr auto Params = UECodeGen_Private::FFloatPropertyParams
-            {
+            constexpr auto Params = UECodeGen_Private::FFloatPropertyParams{
                 nullptr,
                 nullptr,
                 CPF_HasGetValueTypeHash,
@@ -208,8 +205,7 @@ namespace UnLua
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
             const auto Property = new FStrProperty(PropertyCollector, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash);
 #else
-            constexpr auto Params = UECodeGen_Private::FStrPropertyParams
-            {
+            constexpr auto Params = UECodeGen_Private::FStrPropertyParams{
                 nullptr,
                 nullptr,
                 CPF_HasGetValueTypeHash,
@@ -244,8 +240,7 @@ namespace UnLua
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
             const auto Property = new FNameProperty(PropertyCollector, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash);
 #else
-            constexpr auto Params = UECodeGen_Private::FNamePropertyParams
-            {
+            constexpr auto Params = UECodeGen_Private::FNamePropertyParams{
                 nullptr,
                 nullptr,
                 CPF_HasGetValueTypeHash,
@@ -280,8 +275,7 @@ namespace UnLua
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
             const auto Property = new FTextProperty(PropertyCollector, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash);
 #else
-            constexpr auto Params = UECodeGen_Private::FTextPropertyParams
-            {
+            constexpr auto Params = UECodeGen_Private::FTextPropertyParams{
                 nullptr,
                 nullptr,
                 CPF_HasGetValueTypeHash,
@@ -313,19 +307,18 @@ namespace UnLua
         return TextProperty;
     }
 
-    TSharedPtr<ITypeInterface> FPropertyRegistry::GetFieldProperty(UField* Field)
+    TSharedPtr<ITypeInterface> FPropertyRegistry::GetFieldProperty(UField *Field)
     {
         if (const auto Exists = FieldProperties.Find(Field))
             return *Exists;
 
-        FProperty* Property;
+        FProperty *Property;
         if (const auto Class = Cast<UClass>(Field))
         {
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
             Property = new FObjectProperty(PropertyCollector, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash, Class);
 #else
-            constexpr auto Params = UECodeGen_Private::FObjectPropertyParams
-            {
+            constexpr auto Params = UECodeGen_Private::FObjectPropertyParams{
                 nullptr,
                 nullptr,
                 CPF_HasGetValueTypeHash,
@@ -357,8 +350,7 @@ namespace UnLua
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
             Property = new FStructProperty(PropertyCollector, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash, ScriptStruct);
 #else
-            const auto Params = UECodeGen_Private::FStructPropertyParams
-            {
+            const auto Params = UECodeGen_Private::FStructPropertyParams{
                 nullptr,
                 nullptr,
                 ScriptStruct->GetCppStructOps()
@@ -384,17 +376,24 @@ namespace UnLua
             };
             const auto StructProperty = new FStructProperty(PropertyCollector, Params);
             StructProperty->Struct = ScriptStruct;
-            StructProperty->ElementSize = ScriptStruct->PropertiesSize;
+            StructProperty->SetElementSize(ScriptStruct->PropertiesSize);
             Property = StructProperty;
 #endif
         }
         else if (const auto Enum = Cast<UEnum>(Field))
         {
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 7
+            // UE 5.7+: FEnumProperty constructor changed to 3 arguments, use setters for enum and flags
+            const auto EnumProperty = new FEnumProperty(PropertyCollector, NAME_None, RF_Transient);
+            EnumProperty->SetEnum(Enum);
+            EnumProperty->SetPropertyFlags(CPF_HasGetValueTypeHash);
+#else
             const auto EnumProperty = new FEnumProperty(PropertyCollector, NAME_None, RF_Transient, 0, CPF_HasGetValueTypeHash, Enum);
+#endif
             const auto UnderlyingProperty = new FByteProperty(EnumProperty, TEXT("UnderlyingType"), RF_Transient);
             Property = EnumProperty;
             Property->AddCppProperty(UnderlyingProperty);
-            Property->ElementSize = UnderlyingProperty->ElementSize;
+            Property->SetElementSize(UnderlyingProperty->GetElementSize());
             Property->PropertyFlags |= CPF_IsPlainOldData | CPF_NoDestructor | CPF_ZeroConstructor;
         }
         else

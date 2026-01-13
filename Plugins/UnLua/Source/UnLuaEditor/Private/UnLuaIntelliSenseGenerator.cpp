@@ -1,15 +1,15 @@
 // Tencent is pleased to support the open source community by making UnLua available.
-// 
+//
 // Copyright (C) 2019 Tencent. All rights reserved.
 //
-// Licensed under the MIT License (the "License"); 
+// Licensed under the MIT License (the "License");
 // you may not use this file except in compliance with the License. You may obtain a copy of the License at
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, 
-// software distributed under the License is distributed on an "AS IS" BASIS, 
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
 #include "Misc/EngineVersionComparison.h"
@@ -46,7 +46,7 @@ void FUnLuaIntelliSenseGenerator::Initialize()
 
     OutputDir = IPluginManager::Get().FindPlugin("UnLua")->GetBaseDir() + "/Intermediate/IntelliSense";
 
-    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+    FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
     AssetRegistryModule.Get().OnAssetAdded().AddRaw(this, &FUnLuaIntelliSenseGenerator::OnAssetAdded);
     AssetRegistryModule.Get().OnAssetRemoved().AddRaw(this, &FUnLuaIntelliSenseGenerator::OnAssetRemoved);
     AssetRegistryModule.Get().OnAssetRenamed().AddRaw(this, &FUnLuaIntelliSenseGenerator::OnAssetRenamed);
@@ -57,7 +57,7 @@ void FUnLuaIntelliSenseGenerator::Initialize()
 
 void FUnLuaIntelliSenseGenerator::UpdateAll()
 {
-    const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+    const FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 
     FARFilter Filter;
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
@@ -69,7 +69,7 @@ void FUnLuaIntelliSenseGenerator::UpdateAll()
 #endif
 
     TArray<FAssetData> BlueprintAssets;
-    TArray<const UField*> NativeTypes;
+    TArray<const UField *> NativeTypes;
     AssetRegistryModule.Get().GetAssets(Filter, BlueprintAssets);
     CollectTypes(NativeTypes);
 
@@ -106,7 +106,7 @@ void FUnLuaIntelliSenseGenerator::UpdateAll()
     SlowTask.EnterProgressFrame();
 }
 
-bool FUnLuaIntelliSenseGenerator::IsBlueprint(const FAssetData& AssetData)
+bool FUnLuaIntelliSenseGenerator::IsBlueprint(const FAssetData &AssetData)
 {
 #if UE_VERSION_OLDER_THAN(5, 1, 0)
     const FName AssetClass = AssetData.AssetClass;
@@ -117,9 +117,9 @@ bool FUnLuaIntelliSenseGenerator::IsBlueprint(const FAssetData& AssetData)
 #endif
 }
 
-bool FUnLuaIntelliSenseGenerator::ShouldExport(const FAssetData& AssetData, bool bLoad)
+bool FUnLuaIntelliSenseGenerator::ShouldExport(const FAssetData &AssetData, bool bLoad)
 {
-    const auto& Settings = *GetDefault<UUnLuaEditorSettings>();
+    const auto &Settings = *GetDefault<UUnLuaEditorSettings>();
     if (!Settings.bGenerateIntelliSense)
         return false;
 
@@ -140,17 +140,17 @@ bool FUnLuaIntelliSenseGenerator::ShouldExport(const FAssetData& AssetData, bool
     return false;
 }
 
-void FUnLuaIntelliSenseGenerator::Export(const UBlueprint* Blueprint)
+void FUnLuaIntelliSenseGenerator::Export(const UBlueprint *Blueprint)
 {
     Export(Blueprint->GeneratedClass);
 }
 
-void FUnLuaIntelliSenseGenerator::Export(const UField* Field)
+void FUnLuaIntelliSenseGenerator::Export(const UField *Field)
 {
 #if ENGINE_MAJOR_VERSION > 4 || (ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION >= 26)
-    const UPackage* Package = Field->GetPackage();
+    const UPackage *Package = Field->GetPackage();
 #else
-    const UPackage* Package = (UPackage*)Field->GetTypedOuter(UPackage::StaticClass());
+    const UPackage *Package = (UPackage *)Field->GetTypedOuter(UPackage::StaticClass());
 #endif
     auto ModuleName = Package->GetName();
     if (!Field->IsNative())
@@ -166,7 +166,7 @@ void FUnLuaIntelliSenseGenerator::Export(const UField* Field)
     SaveFile(ModuleName, FileName, Content);
 }
 
-void FUnLuaIntelliSenseGenerator::ExportUE(const TArray<const UField*> Types)
+void FUnLuaIntelliSenseGenerator::ExportUE(const TArray<const UField *> Types)
 {
     const FString Content = UnLua::IntelliSense::GetUE(Types);
     SaveFile("", "UE", Content);
@@ -178,26 +178,21 @@ void FUnLuaIntelliSenseGenerator::ExportUnLua()
     const auto SrcDir = ContentDir / "IntelliSense";
     const auto DstDir = OutputDir;
 
-    IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+    IPlatformFile &PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
     if (!PlatformFile.DirectoryExists(*SrcDir))
         return;
 
     PlatformFile.CopyDirectoryTree(*DstDir, *SrcDir, true);
 }
 
-void FUnLuaIntelliSenseGenerator::CollectTypes(TArray<const UField*>& Types)
+void FUnLuaIntelliSenseGenerator::CollectTypes(TArray<const UField *> &Types)
 {
     for (TObjectIterator<UClass> It; It; ++It)
     {
-        const UClass* Class = *It;
+        const UClass *Class = *It;
         const FString ClassName = Class->GetName();
         // ReSharper disable StringLiteralTypo
-        if (ClassName.StartsWith("SKEL_")
-            || ClassName.StartsWith("PLACEHOLDER-CLASS")
-            || ClassName.StartsWith("REINST_")
-            || ClassName.StartsWith("TRASHCLASS_")
-            || ClassName.StartsWith("HOTRELOADED_")
-        )
+        if (ClassName.StartsWith("SKEL_") || ClassName.StartsWith("PLACEHOLDER-CLASS") || ClassName.StartsWith("REINST_") || ClassName.StartsWith("TRASHCLASS_") || ClassName.StartsWith("HOTRELOADED_"))
         {
             // skip nonsense types
             continue;
@@ -208,20 +203,20 @@ void FUnLuaIntelliSenseGenerator::CollectTypes(TArray<const UField*>& Types)
 
     for (TObjectIterator<UScriptStruct> It; It; ++It)
     {
-        const UScriptStruct* ScriptStruct = *It;
+        const UScriptStruct *ScriptStruct = *It;
         Types.Add(ScriptStruct);
     }
 
     for (TObjectIterator<UEnum> It; It; ++It)
     {
-        const UEnum* Enum = *It;
+        const UEnum *Enum = *It;
         Types.Add(Enum);
     }
 }
 
-void FUnLuaIntelliSenseGenerator::SaveFile(const FString& ModuleName, const FString& FileName, const FString& GeneratedFileContent)
+void FUnLuaIntelliSenseGenerator::SaveFile(const FString &ModuleName, const FString &FileName, const FString &GeneratedFileContent)
 {
-    IFileManager& FileManager = IFileManager::Get();
+    IFileManager &FileManager = IFileManager::Get();
     const FString Directory = OutputDir / ModuleName;
     if (!FileManager.DirectoryExists(*Directory))
         FileManager.MakeDirectory(*Directory);
@@ -233,9 +228,9 @@ void FUnLuaIntelliSenseGenerator::SaveFile(const FString& ModuleName, const FStr
         FFileHelper::SaveStringToFile(GeneratedFileContent, *FilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
 }
 
-void FUnLuaIntelliSenseGenerator::DeleteFile(const FString& ModuleName, const FString& FileName)
+void FUnLuaIntelliSenseGenerator::DeleteFile(const FString &ModuleName, const FString &FileName)
 {
-    IFileManager& FileManager = IFileManager::Get();
+    IFileManager &FileManager = IFileManager::Get();
     const FString Directory = OutputDir / ModuleName;
     if (!FileManager.DirectoryExists(*Directory))
         FileManager.MakeDirectory(*Directory);
@@ -245,19 +240,19 @@ void FUnLuaIntelliSenseGenerator::DeleteFile(const FString& ModuleName, const FS
         FileManager.Delete(*FilePath);
 }
 
-void FUnLuaIntelliSenseGenerator::OnAssetAdded(const FAssetData& AssetData)
+void FUnLuaIntelliSenseGenerator::OnAssetAdded(const FAssetData &AssetData)
 {
     if (!ShouldExport(AssetData))
         return;
 
     OnAssetUpdated(AssetData);
 
-    TArray<const UField*> Types;
+    TArray<const UField *> Types;
     CollectTypes(Types);
     ExportUE(Types);
 }
 
-void FUnLuaIntelliSenseGenerator::OnAssetRemoved(const FAssetData& AssetData)
+void FUnLuaIntelliSenseGenerator::OnAssetRemoved(const FAssetData &AssetData)
 {
     if (!ShouldExport(AssetData))
         return;
@@ -265,25 +260,25 @@ void FUnLuaIntelliSenseGenerator::OnAssetRemoved(const FAssetData& AssetData)
     DeleteFile(FString("/Game"), AssetData.AssetName.ToString());
 }
 
-void FUnLuaIntelliSenseGenerator::OnAssetRenamed(const FAssetData& AssetData, const FString& OldPath)
+void FUnLuaIntelliSenseGenerator::OnAssetRenamed(const FAssetData &AssetData, const FString &OldPath)
 {
     if (!ShouldExport(AssetData))
         return;
 
-    //remove old Blueprint name
+    // remove old Blueprint name
     const FString OldPackageName = FPackageName::GetShortName(OldPath);
     DeleteFile("/Game", OldPackageName);
 
-    //update new name 
+    // update new name
     OnAssetUpdated(AssetData);
 }
 
-void FUnLuaIntelliSenseGenerator::OnAssetUpdated(const FAssetData& AssetData)
+void FUnLuaIntelliSenseGenerator::OnAssetUpdated(const FAssetData &AssetData)
 {
     if (!ShouldExport(AssetData, true))
         return;
 
-    UBlueprint* Blueprint = LoadObject<UBlueprint>(nullptr, *AssetData.ObjectPath.ToString());
+    UBlueprint *Blueprint = LoadObject<UBlueprint>(nullptr, *AssetData.GetObjectPathString());
     if (!Blueprint)
         return;
 

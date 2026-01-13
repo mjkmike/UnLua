@@ -1,15 +1,15 @@
 // Tencent is pleased to support the open source community by making UnLua available.
-// 
+//
 // Copyright (C) 2019 Tencent. All rights reserved.
 //
-// Licensed under the MIT License (the "License"); 
+// Licensed under the MIT License (the "License");
 // you may not use this file except in compliance with the License. You may obtain a copy of the License at
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, 
-// software distributed under the License is distributed on an "AS IS" BASIS, 
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 
 #include "CollisionHelper.h"
@@ -25,7 +25,8 @@
 
 #ifdef __cplusplus
 #if !LUA_COMPILE_AS_CPP
-extern "C" {
+extern "C"
+{
 #endif
 #endif
 
@@ -46,7 +47,7 @@ const FScriptContainerDesc FScriptContainerDesc::Map(sizeof(FLuaMap), "TMap");
 /**
  * Get lua file full path from relative path
  */
-FString GetFullPathFromRelativePath(const FString& RelativePath)
+FString GetFullPathFromRelativePath(const FString &RelativePath)
 {
     FString FullFilePath = GLuaSrcFullPath + RelativePath;
     FString ProjectDir = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
@@ -56,7 +57,7 @@ FString GetFullPathFromRelativePath(const FString& RelativePath)
         ProjectPersistentDownloadDir.Append("/");
     }
 
-    FString RealFullFilePath = FullFilePath.Replace(*ProjectDir, *ProjectPersistentDownloadDir);        // try to load the file from 'ProjectPersistentDownloadDir' first
+    FString RealFullFilePath = FullFilePath.Replace(*ProjectDir, *ProjectPersistentDownloadDir); // try to load the file from 'ProjectPersistentDownloadDir' first
     if (IFileManager::Get().FileExists(*RealFullFilePath))
     {
         FullFilePath = RealFullFilePath;
@@ -83,29 +84,29 @@ void SetTableForClass(lua_State *L, const char *Name)
     lua_pop(L, 2);
 }
 
-#define USERDATA_MAGIC  0x1688
-#define BIT_VARIANT_TAG            (1 << 7)         // variant tag for userdata
-#define BIT_RELEASED_TAG            (1 << 6)        // this userdata was released and should not use anywhere
-#define BIT_TWOLEVEL_PTR        (1 << 5)            // two level pointer flag
-#define BIT_SCRIPT_CONTAINER    (1 << 4)            // script container (TArray, TSet, TMap) flag
+#define USERDATA_MAGIC 0x1688
+#define BIT_VARIANT_TAG (1 << 7)      // variant tag for userdata
+#define BIT_RELEASED_TAG (1 << 6)     // this userdata was released and should not use anywhere
+#define BIT_TWOLEVEL_PTR (1 << 5)     // two level pointer flag
+#define BIT_SCRIPT_CONTAINER (1 << 4) // script container (TArray, TSet, TMap) flag
 
-#pragma  pack(push)
-#pragma  pack(1)
+#pragma pack(push)
+#pragma pack(1)
 struct FUserdataDesc
 {
-    uint16  magic;
-    uint8   tag;
-    uint8   padding;
+    uint16 magic;
+    uint8 tag;
+    uint8 padding;
 };
-#pragma  pack(pop)
+#pragma pack(pop)
 
 /**
  * Get 'TValue' from Lua stack
  */
-static TValue* GetTValue(lua_State* L, int32 Index)
+static TValue *GetTValue(lua_State *L, int32 Index)
 {
 #if 504 == LUA_VERSION_NUM
-    CallInfo* ci = L->ci;
+    CallInfo *ci = L->ci;
     if (Index > 0)
     {
         StkId o = ci->func + Index;
@@ -120,7 +121,7 @@ static TValue* GetTValue(lua_State* L, int32 Index)
         }
     }
     else if (LUA_REGISTRYINDEX < Index)
-    {  /* negative index */
+    { /* negative index */
         check(Index != 0 && -Index <= L->top - (ci->func + 1));
         return s2v(L->top + Index);
     }
@@ -129,29 +130,29 @@ static TValue* GetTValue(lua_State* L, int32 Index)
         return &G(L)->l_registry;
     }
     else
-    {  /* upvalues */
+    { /* upvalues */
         Index = LUA_REGISTRYINDEX - Index;
         check(Index <= MAXUPVAL + 1);
         if (ttislcf(s2v(ci->func)))
         {
             /* light C function? */
-            return &G(L)->nilvalue;  /* it has no upvalues */
+            return &G(L)->nilvalue; /* it has no upvalues */
         }
         else
         {
-            CClosure* func = clCvalue(s2v(ci->func));
+            CClosure *func = clCvalue(s2v(ci->func));
             return (Index <= func->nupvalues) ? &func->upvalue[Index - 1] : &G(L)->nilvalue;
         }
     }
 #else
-    CallInfo* ci = L->ci;
+    CallInfo *ci = L->ci;
     if (Index > 0)
     {
-        TValue* V = ci->func + Index;
+        TValue *V = ci->func + Index;
         check(Index <= ci->top - (ci->func + 1));
-        return V >= L->top ? (TValue*)NULL : V;
+        return V >= L->top ? (TValue *)NULL : V;
     }
-    else if (Index > LUA_REGISTRYINDEX)             // negative
+    else if (Index > LUA_REGISTRYINDEX) // negative
     {
         check(Index != 0 && -Index <= L->top - (ci->func + 1));
         return L->top + Index;
@@ -160,24 +161,24 @@ static TValue* GetTValue(lua_State* L, int32 Index)
     {
         return &G(L)->l_registry;
     }
-    else                                            // upvalues
+    else // upvalues
     {
         Index = LUA_REGISTRYINDEX - Index;
         check(Index <= MAXUPVAL + 1);
         if (ttislcf(ci->func))
         {
-            return (TValue*)NULL;                   // light C function has no upvalues
+            return (TValue *)NULL; // light C function has no upvalues
         }
         else
         {
-            CClosure* Closure = clCvalue(ci->func);
-            return (Index <= Closure->nupvalues) ? &Closure->upvalue[Index - 1] : (TValue*)NULL;
+            CClosure *Closure = clCvalue(ci->func);
+            return (Index <= Closure->nupvalues) ? &Closure->upvalue[Index - 1] : (TValue *)NULL;
         }
     }
 #endif
 }
 
-static int32 GetTValueType(TValue* Value)
+static int32 GetTValueType(TValue *Value)
 {
 #if 504 == LUA_VERSION_NUM
     return ttype(Value);
@@ -186,17 +187,17 @@ static int32 GetTValueType(TValue* Value)
 #endif
 }
 
-static Udata* GetUdata(TValue* Value)
+static Udata *GetUdata(TValue *Value)
 {
     return uvalue(Value);
 }
 
-static void* GetUdataMem(Udata* U)
+static void *GetUdataMem(Udata *U)
 {
     return getudatamem(U);
 }
 
-static int32 GetUdataMemSize(Udata* U)
+static int32 GetUdataMemSize(Udata *U)
 {
     return U->len;
 }
@@ -206,15 +207,15 @@ static uint8 GetUdataHeaderSize()
     static uint8 HeaderSize = 0;
     if (0 == HeaderSize)
     {
-        lua_State* L = luaL_newstate();
+        lua_State *L = luaL_newstate();
 #if 504 == LUA_VERSION_NUM
-        uint8* Userdata = (uint8*)lua_newuserdatauv(L, 0, 0);
+        uint8 *Userdata = (uint8 *)lua_newuserdatauv(L, 0, 0);
 #else
-        uint8* Userdata = (uint8*)lua_newuserdata(L, 0);
+        uint8 *Userdata = (uint8 *)lua_newuserdata(L, 0);
 #endif
-        TValue* Value = GetTValue(L, -1);
-        Udata* U = GetUdata(Value);
-        HeaderSize = Userdata - (uint8*)U;
+        TValue *Value = GetTValue(L, -1);
+        Udata *U = GetUdata(Value);
+        HeaderSize = Userdata - (uint8 *)U;
         lua_close(L);
     }
 
@@ -228,18 +229,18 @@ uint8 CalcUserdataPadding(int32 Alignment)
 {
     uint8 HeaderSize = GetUdataHeaderSize();
     uint8 AlignByte = Align(HeaderSize, Alignment);
-    return (uint8)(Align(HeaderSize, Alignment) - HeaderSize);      // sizeof(UUdata) == 40
+    return (uint8)(Align(HeaderSize, Alignment) - HeaderSize); // sizeof(UUdata) == 40
 }
 
-static FUserdataDesc* GetUserdataDesc(Udata* U)
+static FUserdataDesc *GetUserdataDesc(Udata *U)
 {
-    FUserdataDesc* UserdataDesc = NULL;
+    FUserdataDesc *UserdataDesc = NULL;
 
     uint8 DescSize = sizeof(FUserdataDesc);
     int32 UdataMemSize = GetUdataMemSize(U);
     if (DescSize <= UdataMemSize)
     {
-        UserdataDesc = (FUserdataDesc*)((uint8*)GetUdataMem(U) + UdataMemSize - DescSize);
+        UserdataDesc = (FUserdataDesc *)((uint8 *)GetUdataMem(U) + UdataMemSize - DescSize);
         if (USERDATA_MAGIC != UserdataDesc->magic)
         {
             UserdataDesc = NULL;
@@ -249,14 +250,14 @@ static FUserdataDesc* GetUserdataDesc(Udata* U)
     return UserdataDesc;
 }
 
-static void* NewUserdataWithDesc(lua_State* L, int Size, uint8 Tag, uint8 Padding)
+static void *NewUserdataWithDesc(lua_State *L, int Size, uint8 Tag, uint8 Padding)
 {
 #if 504 == LUA_VERSION_NUM
-    uint8* Userdata = (uint8*)lua_newuserdatauv(L, Size + Padding + sizeof(FUserdataDesc), 0);
+    uint8 *Userdata = (uint8 *)lua_newuserdatauv(L, Size + Padding + sizeof(FUserdataDesc), 0);
 #else
-    uint8* Userdata = (uint8*)lua_newuserdata(L, Size + Padding + sizeof(FUserdataDesc));
+    uint8 *Userdata = (uint8 *)lua_newuserdata(L, Size + Padding + sizeof(FUserdataDesc));
 #endif
-    FUserdataDesc* UserdataDesc = (FUserdataDesc*)(Userdata + Size + Padding);
+    FUserdataDesc *UserdataDesc = (FUserdataDesc *)(Userdata + Size + Padding);
     UserdataDesc->magic = USERDATA_MAGIC;
     UserdataDesc->tag = Tag;
     UserdataDesc->padding = Padding;
@@ -264,37 +265,37 @@ static void* NewUserdataWithDesc(lua_State* L, int Size, uint8 Tag, uint8 Paddin
     return Userdata;
 }
 
-void* NewUserdataWithTwoLvPtrTag(lua_State* L, int Size, void* Object)
+void *NewUserdataWithTwoLvPtrTag(lua_State *L, int Size, void *Object)
 {
-    void* Userdata = NewUserdataWithDesc(L, Size, (BIT_VARIANT_TAG | BIT_TWOLEVEL_PTR), 0);
-    *(void**)Userdata = Object;
+    void *Userdata = NewUserdataWithDesc(L, Size, (BIT_VARIANT_TAG | BIT_TWOLEVEL_PTR), 0);
+    *(void **)Userdata = Object;
     return Userdata;
 }
 
-void* NewUserdataWithContainerTag(lua_State* L, int Size)
+void *NewUserdataWithContainerTag(lua_State *L, int Size)
 {
     return NewUserdataWithDesc(L, Size, (BIT_VARIANT_TAG | BIT_SCRIPT_CONTAINER), 0);
 }
 
-void* NewUserdataWithPaddingTag(lua_State* L, int Size, uint8 Padding)
+void *NewUserdataWithPaddingTag(lua_State *L, int Size, uint8 Padding)
 {
     return NewUserdataWithDesc(L, Size, BIT_VARIANT_TAG, Padding);
 }
 
-void MarkUserdataTwoLvPtrTag(void* Userdata)
+void MarkUserdataTwoLvPtrTag(void *Userdata)
 {
-    Udata* U = (Udata*)((uint8*)Userdata - GetUdataHeaderSize());
-    FUserdataDesc* UserdataDesc = GetUserdataDesc(U);
+    Udata *U = (Udata *)((uint8 *)Userdata - GetUdataHeaderSize());
+    FUserdataDesc *UserdataDesc = GetUserdataDesc(U);
     if (UserdataDesc)
     {
         UserdataDesc->tag = (BIT_VARIANT_TAG | BIT_TWOLEVEL_PTR);
     }
 }
 
-void SetUserdataFlags(void* Userdata, uint8 Flags)
+void SetUserdataFlags(void *Userdata, uint8 Flags)
 {
-    Udata* U = (Udata*)((uint8*)Userdata - GetUdataHeaderSize());
-    FUserdataDesc* UserdataDesc = GetUserdataDesc(U);
+    Udata *U = (Udata *)((uint8 *)Userdata - GetUdataHeaderSize());
+    FUserdataDesc *UserdataDesc = GetUserdataDesc(U);
     if (UserdataDesc)
     {
         UserdataDesc->tag |= Flags;
@@ -309,7 +310,7 @@ void SetUserdataFlags(void* Userdata, uint8 Flags)
  * @param[out] OutClassMetatable - whether the userdata comes from a metatable
  * @return - the untyped dynamic array
  */
-void* GetUserdata(lua_State *L, int32 Index, bool *OutTwoLvlPtr, bool *OutClassMetatable)
+void *GetUserdata(lua_State *L, int32 Index, bool *OutTwoLvlPtr, bool *OutClassMetatable)
 {
     return UnLua::LowLevel::GetUserdata(L, Index, OutTwoLvlPtr, OutClassMetatable);
 }
@@ -317,26 +318,25 @@ void* GetUserdata(lua_State *L, int32 Index, bool *OutTwoLvlPtr, bool *OutClassM
 /**
  * Get the address of userdata, fast path
  */
-void* GetUserdataFast(lua_State *L, int32 Index, bool *OutTwoLvlPtr)
+void *GetUserdataFast(lua_State *L, int32 Index, bool *OutTwoLvlPtr)
 {
     bool bTwoLvlPtr = false;
-    void* Userdata = nullptr;
+    void *Userdata = nullptr;
 
-    TValue* Value = GetTValue(L, Index);
+    TValue *Value = GetTValue(L, Index);
     int32 Type = GetTValueType(Value);
     if (Type == LUA_TUSERDATA)
     {
-        Udata* U = GetUdata(Value);
-        uint8* Buffer = (uint8*)GetUdataMem(U);
-        FUserdataDesc* UserdataDesc = GetUserdataDesc(U);
-        if ((UserdataDesc)
-            && (UserdataDesc->tag & BIT_VARIANT_TAG))// if the userdata has a variant tag
+        Udata *U = GetUdata(Value);
+        uint8 *Buffer = (uint8 *)GetUdataMem(U);
+        FUserdataDesc *UserdataDesc = GetUserdataDesc(U);
+        if ((UserdataDesc) && (UserdataDesc->tag & BIT_VARIANT_TAG)) // if the userdata has a variant tag
         {
-            bTwoLvlPtr = (UserdataDesc->tag & BIT_TWOLEVEL_PTR) != 0;        // test if the userdata is a two level pointer
+            bTwoLvlPtr = (UserdataDesc->tag & BIT_TWOLEVEL_PTR) != 0; // test if the userdata is a two level pointer
             if (UserdataDesc->tag & BIT_RELEASED_TAG)
                 Userdata = nullptr;
             else
-                Userdata = bTwoLvlPtr ? Buffer : Buffer + UserdataDesc->padding;    // add padding to userdata if it's not a two level pointer
+                Userdata = bTwoLvlPtr ? Buffer : Buffer + UserdataDesc->padding; // add padding to userdata if it's not a two level pointer
         }
         else
         {
@@ -345,12 +345,12 @@ void* GetUserdataFast(lua_State *L, int32 Index, bool *OutTwoLvlPtr)
     }
     else if (Type == LUA_TLIGHTUSERDATA)
     {
-        Userdata = pvalue(Value);                                 // get the light userdata
+        Userdata = pvalue(Value); // get the light userdata
     }
 
     if (OutTwoLvlPtr)
     {
-        *OutTwoLvlPtr = bTwoLvlPtr;                                 // set two level pointer flag
+        *OutTwoLvlPtr = bTwoLvlPtr; // set two level pointer flag
     }
 
     return Userdata;
@@ -359,7 +359,7 @@ void* GetUserdataFast(lua_State *L, int32 Index, bool *OutTwoLvlPtr)
 /**
  * Set metatable for the userdata/table on the top of the stack
  */
-bool TryToSetMetatable(lua_State* L, const char* MetatableName, UObject* Object)
+bool TryToSetMetatable(lua_State *L, const char *MetatableName, UObject *Object)
 {
     const auto Registry = UnLua::FLuaEnv::FindEnv(L)->GetClassRegistry();
     if (!Registry)
@@ -371,7 +371,7 @@ bool TryToSetMetatable(lua_State* L, const char* MetatableName, UObject* Object)
 /**
  * Create a new userdata with padding size
  */
-void* NewUserdataWithPadding(lua_State *L, int32 Size, const char *MetatableName, uint8 PaddingSize)
+void *NewUserdataWithPadding(lua_State *L, int32 Size, const char *MetatableName, uint8 PaddingSize)
 {
     if (Size < 1)
     {
@@ -379,36 +379,36 @@ void* NewUserdataWithPadding(lua_State *L, int32 Size, const char *MetatableName
         UNLUA_LOGERROR(L, LogUnLua, Warning, TEXT("%s, Invalid size!"), ANSI_TO_TCHAR(__FUNCTION__));
         return nullptr;
     }
-    if ((PaddingSize & 0x07) != 0)          // 8 bytes padding at least..., 8, 24, 88
+    if ((PaddingSize & 0x07) != 0) // 8 bytes padding at least..., 8, 24, 88
     {
         // padding size must be greater or equal to 8 bytes
         UNLUA_LOGERROR(L, LogUnLua, Warning, TEXT("%s, Invalid padding size!"), ANSI_TO_TCHAR(__FUNCTION__));
         return nullptr;
     }
 
-    void* Userdata = NewUserdataWithPaddingTag(L, Size, PaddingSize); // userdata size must add padding size
+    void *Userdata = NewUserdataWithPaddingTag(L, Size, PaddingSize); // userdata size must add padding size
     if (MetatableName)
     {
-        bool bSuccess = TryToSetMetatable(L, MetatableName);        // set metatable
+        bool bSuccess = TryToSetMetatable(L, MetatableName); // set metatable
         if (!bSuccess)
         {
             UNLUA_LOGERROR(L, LogUnLua, Warning, TEXT("%s, Invalid metatable, metatable name: %s!"), ANSI_TO_TCHAR(__FUNCTION__), UTF8_TO_TCHAR(MetatableName));
             return nullptr;
         }
     }
-    return (uint8*)Userdata + PaddingSize;                          // return 'valid' address (userdata memory address + padding size)
+    return (uint8 *)Userdata + PaddingSize; // return 'valid' address (userdata memory address + padding size)
 }
 
 /**
  * Get a cpp instance's address
  */
-void* GetCppInstance(lua_State *L, int32 Index)
+void *GetCppInstance(lua_State *L, int32 Index)
 {
     bool bTwoLvlPtr = false;
     void *Userdata = UnLua::LowLevel::GetUserdata(L, Index, &bTwoLvlPtr);
     if (Userdata)
     {
-        return bTwoLvlPtr ? *((void**)Userdata) : Userdata;         // return instance's address
+        return bTwoLvlPtr ? *((void **)Userdata) : Userdata; // return instance's address
     }
     return nullptr;
 }
@@ -416,25 +416,24 @@ void* GetCppInstance(lua_State *L, int32 Index)
 /**
  * Get a cpp instance's address, fast path
  */
-void* GetCppInstanceFast(lua_State *L, int32 Index)
+void *GetCppInstanceFast(lua_State *L, int32 Index)
 {
     bool bTwoLvlPtr = false;
     void *Userdata = GetUserdataFast(L, Index, &bTwoLvlPtr);
     if (Userdata)
     {
-        return bTwoLvlPtr ? *((void**)Userdata) : Userdata;         // return instance's address
+        return bTwoLvlPtr ? *((void **)Userdata) : Userdata; // return instance's address
     }
     return nullptr;
 }
 
-
 /**
  * Create a new userdata for a script container
  */
-void* NewScriptContainer(lua_State *L, const FScriptContainerDesc &Desc)
+void *NewScriptContainer(lua_State *L, const FScriptContainerDesc &Desc)
 {
-    void* Userdata = NewUserdataWithContainerTag(L, Desc.GetSize());
-    luaL_setmetatable(L, Desc.GetName());   // set metatable
+    void *Userdata = NewUserdataWithContainerTag(L, Desc.GetSize());
+    luaL_setmetatable(L, Desc.GetName()); // set metatable
     return Userdata;
 }
 
@@ -443,7 +442,7 @@ void* NewScriptContainer(lua_State *L, const FScriptContainerDesc &Desc)
  *
  * @return - null if container is already cached, or the new created userdata otherwise
  */
-void* CacheScriptContainer(lua_State *L, void *Key, const FScriptContainerDesc &Desc)
+void *CacheScriptContainer(lua_State *L, void *Key, const FScriptContainerDesc &Desc)
 {
     if (!Key)
     {
@@ -455,16 +454,16 @@ void* CacheScriptContainer(lua_State *L, void *Key, const FScriptContainerDesc &
     void *Userdata = nullptr;
     lua_getfield(L, LUA_REGISTRYINDEX, "ScriptContainerMap");
     lua_pushlightuserdata(L, Key);
-    int32 Type = lua_rawget(L, -2);             
+    int32 Type = lua_rawget(L, -2);
     if (Type == LUA_TNIL)
     {
         lua_pop(L, 1);
 
-        Userdata = NewUserdataWithContainerTag(L, Desc.GetSize());      // create new userdata
-        luaL_setmetatable(L, Desc.GetName());               // set metatable
+        Userdata = NewUserdataWithContainerTag(L, Desc.GetSize()); // create new userdata
+        luaL_setmetatable(L, Desc.GetName());                      // set metatable
         lua_pushlightuserdata(L, Key);
         lua_pushvalue(L, -2);
-        lua_rawset(L, -4);                                  // cache it in 'ScriptContainerMap'
+        lua_rawset(L, -4); // cache it in 'ScriptContainerMap'
         UnLua::FLuaEnv::FindEnv(L)->GetDanglingCheck()->CaptureContainer(L, Key);
     }
 #if UE_BUILD_DEBUG
@@ -474,11 +473,10 @@ void* CacheScriptContainer(lua_State *L, void *Key, const FScriptContainerDesc &
     }
 #endif
     lua_remove(L, -2);
-    return Userdata;            // return null if container is already cached, or the new created userdata otherwise
+    return Userdata; // return null if container is already cached, or the new created userdata otherwise
 }
 
-
-void* CacheScriptContainer(lua_State *L, void *Key, const FScriptContainerDesc &Desc, const TFunctionRef<bool (void*)>& Validator)
+void *CacheScriptContainer(lua_State *L, void *Key, const FScriptContainerDesc &Desc, const TFunctionRef<bool(void *)> &Validator)
 {
     if (!Key)
     {
@@ -495,33 +493,33 @@ void* CacheScriptContainer(lua_State *L, void *Key, const FScriptContainerDesc &
     {
         lua_pop(L, 1);
 
-        Userdata = NewUserdataWithContainerTag(L, Desc.GetSize());      // create new userdata
-        luaL_setmetatable(L, Desc.GetName());               // set metatable
+        Userdata = NewUserdataWithContainerTag(L, Desc.GetSize()); // create new userdata
+        luaL_setmetatable(L, Desc.GetName());                      // set metatable
         lua_pushlightuserdata(L, Key);
         lua_pushvalue(L, -2);
-        lua_rawset(L, -4);                                  // cache it in 'ScriptContainerMap'
+        lua_rawset(L, -4); // cache it in 'ScriptContainerMap'
         UnLua::FLuaEnv::FindEnv(L)->GetDanglingCheck()->CaptureContainer(L, Key);
     }
 
     lua_remove(L, -2);
-    return Userdata;            // return null if container is already cached, or the new created userdata otherwise
+    return Userdata; // return null if container is already cached, or the new created userdata otherwise
 }
 
 /**
  * Get a script container at the given stack index
  */
-void* GetScriptContainer(lua_State *L, int32 Index)
+void *GetScriptContainer(lua_State *L, int32 Index)
 {
-    TValue* Value = GetTValue(L, Index);
+    TValue *Value = GetTValue(L, Index);
     if ((Value->tt_ & 0x0F) == LUA_TUSERDATA)
     {
-        uint8 Flag = (BIT_VARIANT_TAG | BIT_SCRIPT_CONTAINER);              // variant tags
+        uint8 Flag = (BIT_VARIANT_TAG | BIT_SCRIPT_CONTAINER); // variant tags
 
-        Udata* U = GetUdata(Value);
-        FUserdataDesc* UserdataDesc = GetUserdataDesc(U);
+        Udata *U = GetUdata(Value);
+        FUserdataDesc *UserdataDesc = GetUserdataDesc(U);
         if (UserdataDesc)
         {
-            return (UserdataDesc->tag & Flag) == Flag ? *((void**)GetUdataMem(U)) : nullptr;
+            return (UserdataDesc->tag & Flag) == Flag ? *((void **)GetUdataMem(U)) : nullptr;
         }
     }
     return nullptr;
@@ -554,25 +552,24 @@ void RemoveCachedScriptContainer(lua_State *L, void *Key)
  */
 void PushObjectCore(lua_State *L, UObjectBaseUtility *Object)
 {
-    FString MetatableName = UnLua::LowLevel::GetMetatableName((UObject*)Object);
+    FString MetatableName = UnLua::LowLevel::GetMetatableName((UObject *)Object);
     if (MetatableName.IsEmpty())
     {
-		lua_pushnil(L);
-		return;
+        lua_pushnil(L);
+        return;
     }
-    
+
 #if UNLUA_ENABLE_DEBUG != 0
-	UE_LOG(LogUnLua, Log, TEXT("%s : %p,%s,%s"), ANSI_TO_TCHAR(__FUNCTION__), Object,*Object->GetName(), *MetatableName);
+    UE_LOG(LogUnLua, Log, TEXT("%s : %p,%s,%s"), ANSI_TO_TCHAR(__FUNCTION__), Object, *Object->GetName(), *MetatableName);
 #endif
 
-    NewUserdataWithTwoLvPtrTag(L, sizeof(void*), Object);  // create a userdata and store the UObject address
-    bool bSuccess = TryToSetMetatable(L, TCHAR_TO_UTF8(*MetatableName), (UObject*)Object);
-	if (!bSuccess)
-	{
+    NewUserdataWithTwoLvPtrTag(L, sizeof(void *), Object); // create a userdata and store the UObject address
+    bool bSuccess = TryToSetMetatable(L, TCHAR_TO_UTF8(*MetatableName), (UObject *)Object);
+    if (!bSuccess)
+    {
         UNLUA_LOGERROR(L, LogUnLua, Warning, TEXT("%s, Invalid metatable,Name %s, Object %s,%p!"), ANSI_TO_TCHAR(__FUNCTION__), *MetatableName, *Object->GetName(), Object);
     }
 }
-
 
 /**
  * Push a integer
@@ -646,7 +643,7 @@ static void PushInterfaceElement(lua_State *L, FInterfaceProperty *Property, voi
  */
 static void PushStructElement(lua_State *L, FProperty *Property, void *Value)
 {
-    NewUserdataWithTwoLvPtrTag(L, sizeof(void*), Value);
+    NewUserdataWithTwoLvPtrTag(L, sizeof(void *), Value);
 }
 
 /**
@@ -655,8 +652,8 @@ static void PushStructElement(lua_State *L, FProperty *Property, void *Value)
 static void PushDelegateElement(lua_State *L, FDelegateProperty *Property, void *Value)
 {
     FScriptDelegate *ScriptDelegate = Property->GetPropertyValuePtr(Value);
-    UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry()->Register(ScriptDelegate, Property, (UObject*)Value);
-    NewUserdataWithTwoLvPtrTag(L, sizeof(void*), ScriptDelegate);
+    UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry()->Register(ScriptDelegate, Property, (UObject *)Value);
+    NewUserdataWithTwoLvPtrTag(L, sizeof(void *), ScriptDelegate);
 }
 
 /**
@@ -670,8 +667,8 @@ static void PushMCDelegateElement(lua_State *L, FMulticastDelegateProperty *Prop
     void *ScriptDelegate = Value;
 #endif
 
-    UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry()->Register(ScriptDelegate, Property, (UObject*)Value);
-    NewUserdataWithTwoLvPtrTag(L, sizeof(void*), ScriptDelegate);
+    UnLua::FLuaEnv::FindEnvChecked(L).GetDelegateRegistry()->Register(ScriptDelegate, Property, (UObject *)Value);
+    NewUserdataWithTwoLvPtrTag(L, sizeof(void *), ScriptDelegate);
 }
 
 template <typename T, bool WithMetaTableName>
@@ -691,7 +688,7 @@ public:
     static bool CheckMetaTable(const char *MetatableName) { return MetatableName != nullptr; }
     static void PrePushArray(lua_State *L, const char *MetatableName)
     {
-        const auto& Env = UnLua::FLuaEnv::FindEnvChecked(L);
+        const auto &Env = UnLua::FLuaEnv::FindEnvChecked(L);
         Env.GetClassRegistry()->PushMetatable(L, MetatableName);
     }
     static void PostPushArray(lua_State *L) { lua_pop(L, 1); }
@@ -708,10 +705,10 @@ public:
  * Push static property array
  */
 template <typename T, bool WithMetaTableName>
-static void PushPropertyArray(lua_State *L, T *Property, void *Value, void(*PushFunc)(lua_State*, T*, void*), const char *MetatableName = nullptr)
+static void PushPropertyArray(lua_State *L, T *Property, void *Value, void (*PushFunc)(lua_State *, T *, void *), const char *MetatableName = nullptr)
 {
 #if !UE_BUILD_SHIPPING
-    if (!Property || !Value || Property->ArrayDim < 2 || Property->ElementSize < 1)
+    if (!Property || !Value || Property->ArrayDim < 2 || Property->GetElementSize() < 1)
     {
         UNLUA_LOGERROR(L, LogUnLua, Warning, TEXT("%s, Invalid parameters!"), ANSI_TO_TCHAR(__FUNCTION__));
         return;
@@ -724,7 +721,7 @@ static void PushPropertyArray(lua_State *L, T *Property, void *Value, void(*Push
         return;
     }
 
-    lua_getfield(L, LUA_REGISTRYINDEX, "ArrayMap");         // get weak table 'ArrayMap'
+    lua_getfield(L, LUA_REGISTRYINDEX, "ArrayMap"); // get weak table 'ArrayMap'
     lua_pushlightuserdata(L, Value);
     int32 Type = lua_rawget(L, -2);
     if (Type != LUA_TTABLE)
@@ -732,25 +729,24 @@ static void PushPropertyArray(lua_State *L, T *Property, void *Value, void(*Push
         check(Type == LUA_TNIL);
         lua_pop(L, 1);
 
-        uint8 *ElementPtr = (uint8*)Value;
-        lua_newtable(L);                                    // create a Lua table
+        uint8 *ElementPtr = (uint8 *)Value;
+        lua_newtable(L); // create a Lua table
         TPropertyArrayPushPolicy<T, WithMetaTableName>::PrePushArray(L, MetatableName);
         for (int32 i = 0; i < Property->ArrayDim; ++i)
         {
             lua_pushinteger(L, i + 1);
             PushFunc(L, Property, ElementPtr);
-            ElementPtr += Property->ElementSize;
+            ElementPtr += Property->GetElementSize();
             TPropertyArrayPushPolicy<T, WithMetaTableName>::PostPushSingleElement(L);
         }
         TPropertyArrayPushPolicy<T, WithMetaTableName>::PostPushArray(L);
 
-        lua_pushlightuserdata(L, Value);                    // cache the Lua table in 'ArrayMap'
+        lua_pushlightuserdata(L, Value); // cache the Lua table in 'ArrayMap'
         lua_pushvalue(L, -2);
         lua_rawset(L, -4);
     }
     lua_remove(L, -2);
 }
-
 
 void PushIntegerArray(lua_State *L, FNumericProperty *Property, void *Value)
 {
@@ -810,7 +806,7 @@ void PushStructArray(lua_State *L, FProperty *Property, void *Value, const char 
 /**
  * Get target UObject and Lua function pointer for a delegate
  */
-int32 GetDelegateInfo(lua_State *L, int32 Index, UObject* &Object, const void* &Function)
+int32 GetDelegateInfo(lua_State *L, int32 Index, UObject *&Object, const void *&Function)
 {
     int32 Type = lua_type(L, Index);
     if (Type != LUA_TTABLE)
@@ -826,12 +822,12 @@ int32 GetDelegateInfo(lua_State *L, int32 Index, UObject* &Object, const void* &
         Type = lua_rawgeti(L, Index, i);
         if (Type == LUA_TFUNCTION)
         {
-            Function = lua_topointer(L, -1);            // Lua function pointer
+            Function = lua_topointer(L, -1); // Lua function pointer
             FuncIdxInTable = i;
         }
         else
         {
-            Object = UnLua::GetUObject(L, -1);          // target UObject
+            Object = UnLua::GetUObject(L, -1); // target UObject
         }
         lua_pop(L, 1);
     }
@@ -868,8 +864,8 @@ int32 PushFunction(lua_State *L, UObjectBaseUtility *Object, const char *Functio
 {
     int32 N = lua_gettop(L);
     lua_pushcfunction(L, UnLua::ReportLuaCallError);
-    const auto& Env = UnLua::FLuaEnv::FindEnv(L);
-    const auto Ref = Env->GetObjectRegistry()->GetBoundRef((UObject*)Object);
+    const auto &Env = UnLua::FLuaEnv::FindEnv(L);
+    const auto Ref = Env->GetObjectRegistry()->GetBoundRef((UObject *)Object);
     if (Ref != LUA_NOREF)
     {
         lua_rawgeti(L, LUA_REGISTRYINDEX, Ref);
@@ -950,7 +946,7 @@ bool CallFunction(lua_State *L, int32 NumArgs, int32 NumResults)
  */
 static void PushField(lua_State *L, TSharedPtr<FFieldDesc> Field)
 {
-    const auto& Env = UnLua::FLuaEnv::FindEnvChecked(L);
+    const auto &Env = UnLua::FLuaEnv::FindEnvChecked(L);
     check(Field && Field->IsValid());
     if (Field->IsProperty())
     {
@@ -963,16 +959,16 @@ static void PushField(lua_State *L, TSharedPtr<FFieldDesc> Field)
         Env.GetObjectRegistry()->Push(L, Function);
         if (Function->IsLatentFunction())
         {
-            lua_pushcclosure(L, Class_CallLatentFunction, 1);   // closure
+            lua_pushcclosure(L, Class_CallLatentFunction, 1); // closure
         }
         else
         {
-            lua_pushcclosure(L, Class_CallUFunction, 1);        // closure
+            lua_pushcclosure(L, Class_CallUFunction, 1); // closure
         }
     }
 }
 
-static void GetFieldInternal(lua_State* L) 
+static void GetFieldInternal(lua_State *L)
 {
     lua_pop(L, 1);
 
@@ -980,14 +976,14 @@ static void GetFieldInternal(lua_State* L)
     auto Type = lua_rawget(L, -2);
     check(Type == LUA_TSTRING);
 
-    const char* ClassName = lua_tostring(L, -1);
-    const char* FieldName = lua_tostring(L, 2);
+    const char *ClassName = lua_tostring(L, -1);
+    const char *FieldName = lua_tostring(L, 2);
 
     lua_pop(L, 1);
 
     // TODO: refactor
     const auto Registry = UnLua::FLuaEnv::FindEnv(L)->GetClassRegistry();
-    FClassDesc* ClassDesc = Registry->Register(ClassName);
+    FClassDesc *ClassDesc = Registry->Register(ClassName);
     TSharedPtr<FFieldDesc> Field = ClassDesc->RegisterField(FieldName, ClassDesc);
     if (Field && Field->IsValid())
     {
@@ -1007,10 +1003,10 @@ static void GetFieldInternal(lua_State* L)
                 auto Ptr = lua_touserdata(L, -1);
                 if (Ptr)
                 {
-                    auto Property = static_cast<TSharedPtr<UnLua::ITypeOps>*>(Ptr);
+                    auto Property = static_cast<TSharedPtr<UnLua::ITypeOps> *>(Ptr);
                     if (Property && Property->IsValid())
                     {
-                        auto PropertyDesc = static_cast<FPropertyDesc*>((*Property).Get());
+                        auto PropertyDesc = static_cast<FPropertyDesc *>((*Property).Get());
                         if (!PropertyDesc->IsValid())
                         {
                             bCached = false;
@@ -1026,16 +1022,16 @@ static void GetFieldInternal(lua_State* L)
 
         if (!bCached)
         {
-            PushField(L, Field);                // Property / closure
-            lua_pushvalue(L, 2);                // key
-            lua_pushvalue(L, -2);               // Property / closure
+            PushField(L, Field);  // Property / closure
+            lua_pushvalue(L, 2);  // key
+            lua_pushvalue(L, -2); // Property / closure
             lua_rawset(L, -4);
         }
         if (bInherited)
         {
             lua_remove(L, -2);
-            lua_pushvalue(L, 2);                // key
-            lua_pushvalue(L, -2);               // Property / closure
+            lua_pushvalue(L, 2);  // key
+            lua_pushvalue(L, -2); // Property / closure
             lua_rawset(L, -4);
         }
     }
@@ -1044,7 +1040,7 @@ static void GetFieldInternal(lua_State* L)
         if (ClassDesc->IsClass())
         {
             luaL_getmetatable(L, "UClass");
-            lua_pushvalue(L, 2);                // push key
+            lua_pushvalue(L, 2); // push key
             lua_rawget(L, -2);
             lua_remove(L, -2);
         }
@@ -1058,7 +1054,7 @@ static void GetFieldInternal(lua_State* L)
 /**
  * Get a field (property or function)
  */
-FORCEINLINE static int32 GetField(lua_State* L)
+FORCEINLINE static int32 GetField(lua_State *L)
 {
     lua_getmetatable(L, 1);
     lua_pushvalue(L, 2);
@@ -1072,83 +1068,83 @@ FORCEINLINE static int32 GetField(lua_State* L)
 /**
  * Debug only...
  */
-bool PeekTableElement(lua_State *L, void*)
+bool PeekTableElement(lua_State *L, void *)
 {
     int32 KeyType = lua_type(L, -2);
     switch (KeyType)
     {
     case LUA_TBOOLEAN:
-        {
-            int32 b = lua_toboolean(L, -2);
-            check(b >= 0);
-        }
-        break;
+    {
+        int32 b = lua_toboolean(L, -2);
+        check(b >= 0);
+    }
+    break;
     case LUA_TLIGHTUSERDATA:
-        {
-            const void *p = lua_topointer(L, -2);
-            check(true);
-        }
-        break;
+    {
+        const void *p = lua_topointer(L, -2);
+        check(true);
+    }
+    break;
     case LUA_TNUMBER:
-        {
-            float f = lua_tonumber(L, -2);
-            check(true);
-        }
-        break;
+    {
+        float f = lua_tonumber(L, -2);
+        check(true);
+    }
+    break;
     case LUA_TSTRING:
-        {
-            const char *s = lua_tostring(L, -2);
-            check(true);
-        }
-        break;
+    {
+        const char *s = lua_tostring(L, -2);
+        check(true);
+    }
+    break;
     case LUA_TUSERDATA:
-        {
-            const void *p = lua_topointer(L, -2);
-            check(true);
-        }
-        break;
+    {
+        const void *p = lua_topointer(L, -2);
+        check(true);
+    }
+    break;
     }
     int32 ValueType = lua_type(L, -1);
     switch (ValueType)
     {
     case LUA_TBOOLEAN:
-        {
-            int32 b = lua_toboolean(L, -1);
-            check(b >= 0);
-        }
-        break;
+    {
+        int32 b = lua_toboolean(L, -1);
+        check(b >= 0);
+    }
+    break;
     case LUA_TLIGHTUSERDATA:
-        {
-            const void *p = lua_topointer(L, -1);
-            check(true);
-        }
-        break;
+    {
+        const void *p = lua_topointer(L, -1);
+        check(true);
+    }
+    break;
     case LUA_TNUMBER:
-        {
-            float f = lua_tonumber(L, -1);
-            check(true);
-        }
-        break;
+    {
+        float f = lua_tonumber(L, -1);
+        check(true);
+    }
+    break;
     case LUA_TSTRING:
+    {
+        const char *s = lua_tostring(L, -1);
+        check(true);
+    }
+    break;
+    case LUA_TUSERDATA:
+    {
+        if (lua_checkstack(L, 2))
         {
-            const char *s = lua_tostring(L, -1);
+            UObject *p = UnLua::GetUObject(L, -1);
+            UStruct *Struct = Cast<UStruct>(p);
+            if (Struct && Struct->IsNative())
+            {
+                return false;
+            }
             check(true);
         }
-        break;
-    case LUA_TUSERDATA:
-        {
-            if (lua_checkstack(L, 2))
-            {
-                UObject *p = UnLua::GetUObject(L, -1);
-                UStruct *Struct = Cast<UStruct>(p);
-                if (Struct && Struct->IsNative())
-                {
-                    return false;
-                }
-                check(true);
-            }
-        }
-        break;
+    }
+    break;
     }
     return true;
 }
@@ -1156,7 +1152,7 @@ bool PeekTableElement(lua_State *L, void*)
 /**
  * Traverse a Lua table
  */
-int32 TraverseTable(lua_State *L, int32 Index, void *Userdata, bool(*TraverseWorker)(lua_State*, void*))
+int32 TraverseTable(lua_State *L, int32 Index, void *Userdata, bool (*TraverseWorker)(lua_State *, void *))
 {
     if (Index < 0 && Index > LUA_REGISTRYINDEX)
     {
@@ -1201,10 +1197,10 @@ int32 Class_Index(lua_State *L)
     if (!Ptr)
         return 1;
 
-    auto Property = static_cast<TSharedPtr<UnLua::ITypeOps>*>(Ptr);
+    auto Property = static_cast<TSharedPtr<UnLua::ITypeOps> *>(Ptr);
     if (!Property->IsValid())
         return 0;
-    
+
     auto Self = GetCppInstance(L, 1);
     if (!Self)
         return 1;
@@ -1230,10 +1226,10 @@ int32 Class_NewIndex(lua_State *L)
     auto Ptr = lua_touserdata(L, -1);
     if (Ptr)
     {
-        auto Property = static_cast<TSharedPtr<UnLua::ITypeOps>*>(Ptr);
+        auto Property = static_cast<TSharedPtr<UnLua::ITypeOps> *>(Ptr);
         if (Property->IsValid())
         {
-            void* Self = GetCppInstance(L, 1);
+            void *Self = GetCppInstance(L, 1);
             if (Self)
             {
                 if (UnLua::LowLevel::IsReleasedPtr(Self))
@@ -1255,7 +1251,7 @@ int32 Class_NewIndex(lua_State *L)
             lua_pushvalue(L, 3);
             lua_rawset(L, 1);
 
-            //UE_LOG(LogUnLua, Warning, TEXT("%s: You are modifying metatable! Please make sure you know what you are doing!"), ANSI_TO_TCHAR(__FUNCTION__));
+            // UE_LOG(LogUnLua, Warning, TEXT("%s: You are modifying metatable! Please make sure you know what you are doing!"), ANSI_TO_TCHAR(__FUNCTION__));
         }
     }
     lua_pop(L, 1);
@@ -1268,8 +1264,8 @@ int32 Class_NewIndex(lua_State *L)
 int32 Class_CallUFunction(lua_State *L)
 {
     //!!!Fix!!!
-    //delete desc when is not valid
-    auto& Env = UnLua::FLuaEnv::FindEnvChecked(L);
+    // delete desc when is not valid
+    auto &Env = UnLua::FLuaEnv::FindEnvChecked(L);
     auto Function = Env.GetObjectRegistry()->Get<FFunctionDesc>(L, lua_upvalueindex(1));
     if (!Function->IsValid())
     {
@@ -1286,9 +1282,9 @@ int32 Class_CallUFunction(lua_State *L)
  */
 int32 Class_CallLatentFunction(lua_State *L)
 {
-    auto& Env = UnLua::FLuaEnv::FindEnvChecked(L);
+    auto &Env = UnLua::FLuaEnv::FindEnvChecked(L);
     auto Function = Env.GetObjectRegistry()->Get<FFunctionDesc>(L, lua_upvalueindex(1));
-	if (!Function->IsValid())
+    if (!Function->IsValid())
     {
         UE_LOG(LogUnLua, Log, TEXT("%s: Invalid function descriptor!"), ANSI_TO_TCHAR(__FUNCTION__));
         return 0;
@@ -1306,9 +1302,9 @@ int32 Class_CallLatentFunction(lua_State *L)
     return lua_yield(L, NumResults);
 }
 
-FClassDesc* Class_CheckParam(lua_State *L)
+FClassDesc *Class_CheckParam(lua_State *L)
 {
-    FClassDesc *ClassDesc = (FClassDesc*)lua_touserdata(L, lua_upvalueindex(1));
+    FClassDesc *ClassDesc = (FClassDesc *)lua_touserdata(L, lua_upvalueindex(1));
     if (!ClassDesc)
     {
         UE_LOG(LogUnLua, Log, TEXT("Class : Invalid FClassDesc!"));
@@ -1318,7 +1314,7 @@ FClassDesc* Class_CheckParam(lua_State *L)
     UClass *Class = ClassDesc->AsClass();
     if (!Class)
     {
-        UE_LOG(LogUnLua, Log, TEXT("Class : ClassDesc type is not class(Name : %s, Address : %p)"), *ClassDesc->GetName(),ClassDesc);
+        UE_LOG(LogUnLua, Log, TEXT("Class : ClassDesc type is not class(Name : %s, Address : %p)"), *ClassDesc->GetName(), ClassDesc);
         return NULL;
     }
 
@@ -1331,8 +1327,8 @@ FClassDesc* Class_CheckParam(lua_State *L)
 int32 Class_StaticClass(lua_State *L)
 {
     FClassDesc *ClassDesc = Class_CheckParam(L);
-	if (!ClassDesc)
-	{
+    if (!ClassDesc)
+    {
         return 0;
     }
 
@@ -1344,7 +1340,7 @@ int32 Class_StaticClass(lua_State *L)
 /**
  * Cast a UObject
  */
-int32 Class_Cast(lua_State* L)
+int32 Class_Cast(lua_State *L)
 {
     int32 NumParams = lua_gettop(L);
     if (NumParams < 2)
@@ -1385,7 +1381,7 @@ int32 ScriptStruct_Index(lua_State *L)
     if (!Property.IsValid())
         return 0;
 
-    void* Self = GetCppInstanceFast(L, 1);
+    void *Self = GetCppInstanceFast(L, 1);
     if (!Self)
         return luaL_error(L, TCHAR_TO_UTF8(*FString::Printf(TEXT("attempt to read property '%s' on released struct"), *Property->GetName())));
 
@@ -1394,9 +1390,9 @@ int32 ScriptStruct_Index(lua_State *L)
     return 1;
 }
 
-FClassDesc* ScriptStruct_CheckParam(lua_State *L)
+FClassDesc *ScriptStruct_CheckParam(lua_State *L)
 {
-    FClassDesc *ClassDesc = (FClassDesc*)lua_touserdata(L, lua_upvalueindex(1));
+    FClassDesc *ClassDesc = (FClassDesc *)lua_touserdata(L, lua_upvalueindex(1));
     if (!ClassDesc)
     {
         UE_LOG(LogUnLua, Log, TEXT("ScriptStruct : Invalid FClassDesc!"));
@@ -1445,10 +1441,10 @@ int32 ScriptStruct_Delete(lua_State *L)
     UScriptStruct *ScriptStruct = ClassDesc->AsScriptStruct();
 
     bool bTwoLvlPtr = false;
-    void * Userdata = GetUserdataFast(L, 1, &bTwoLvlPtr);
+    void *Userdata = GetUserdataFast(L, 1, &bTwoLvlPtr);
     if (Userdata)
-    {   
-        //struct in userdata memory
+    {
+        // struct in userdata memory
         if (!bTwoLvlPtr)
         {
             if (!(ScriptStruct->StructFlags & (STRUCT_IsPlainOldData | STRUCT_NoDestructor)))
@@ -1473,22 +1469,21 @@ int32 ScriptStruct_CopyFrom(lua_State *L)
 
     UScriptStruct *ScriptStruct = ClassDesc->AsScriptStruct();
 
-	void *Src = GetCppInstanceFast(L, 1);
-	void *Userdata = nullptr;
-	if (lua_gettop(L) > 1)
-	{
-		Userdata = GetCppInstanceFast(L, 2);
-		lua_pushvalue(L, 2);
-	}
-	else
-	{
-		Userdata = NewUserdataWithPadding(L, ClassDesc->GetSize(), TCHAR_TO_UTF8(*ClassDesc->GetName()), ClassDesc->GetUserdataPadding());
-		ScriptStruct->InitializeStruct(Userdata);
-	}
-	ScriptStruct->CopyScriptStruct(Src,Userdata);
-	return 1;
+    void *Src = GetCppInstanceFast(L, 1);
+    void *Userdata = nullptr;
+    if (lua_gettop(L) > 1)
+    {
+        Userdata = GetCppInstanceFast(L, 2);
+        lua_pushvalue(L, 2);
+    }
+    else
+    {
+        Userdata = NewUserdataWithPadding(L, ClassDesc->GetSize(), TCHAR_TO_UTF8(*ClassDesc->GetName()), ClassDesc->GetUserdataPadding());
+        ScriptStruct->InitializeStruct(Userdata);
+    }
+    ScriptStruct->CopyScriptStruct(Src, Userdata);
+    return 1;
 }
-
 
 /**
  * Generic closure to copy a UScriptStruct
@@ -1534,7 +1529,7 @@ int32 ScriptStruct_Compare(lua_State *L)
 
     void *A = GetCppInstanceFast(L, 1);
     void *B = GetCppInstanceFast(L, 2);
-    bool bResult = A && B ? ScriptStruct->CompareScriptStruct(A, B, /*PPF_None*/0) : false;
+    bool bResult = A && B ? ScriptStruct->CompareScriptStruct(A, B, /*PPF_None*/ 0) : false;
     lua_pushboolean(L, bResult);
     return 1;
 }

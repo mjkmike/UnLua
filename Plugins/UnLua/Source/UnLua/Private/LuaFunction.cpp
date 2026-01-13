@@ -1,17 +1,16 @@
 ﻿// Tencent is pleased to support the open source community by making UnLua available.
-// 
+//
 // Copyright (C) 2019 Tencent. All rights reserved.
 //
-// Licensed under the MIT License (the "License"); 
+// Licensed under the MIT License (the "License");
 // you may not use this file except in compliance with the License. You may obtain a copy of the License at
 //
 // http://opensource.org/licenses/MIT
 //
-// Unless required by applicable law or agreed to in writing, 
-// software distributed under the License is distributed on an "AS IS" BASIS, 
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
-
 
 #include "LuaFunction.h"
 #include "LuaOverrides.h"
@@ -49,7 +48,7 @@ DEFINE_FUNCTION(ULuaFunction::execScriptCallLua)
     Env->GetFunctionRegistry()->Invoke(LuaFunction, Context, Stack, RESULT_PARAM);
 }
 
-ULuaFunction* ULuaFunction::Get(UFunction* Function)
+ULuaFunction *ULuaFunction::Get(UFunction *Function)
 {
     if (!Function)
         return nullptr;
@@ -58,7 +57,7 @@ ULuaFunction* ULuaFunction::Get(UFunction* Function)
     if (LuaFunction)
         return LuaFunction;
 
-    if (Function->Script.Num() < ScriptMagicHeaderSize + sizeof(ULuaFunction*))
+    if (Function->Script.Num() < ScriptMagicHeaderSize + sizeof(ULuaFunction *))
         return nullptr;
 
     const auto Data = Function->Script.GetData();
@@ -68,38 +67,38 @@ ULuaFunction* ULuaFunction::Get(UFunction* Function)
     if (FPlatformMemory::Memcmp(Data, ScriptMagicHeader, ScriptMagicHeaderSize) != 0)
         return nullptr;
 
-    return FPlatformMemory::ReadUnaligned<ULuaFunction*>(Data + ScriptMagicHeaderSize);
+    return FPlatformMemory::ReadUnaligned<ULuaFunction *>(Data + ScriptMagicHeaderSize);
 }
 
-bool ULuaFunction::IsOverridable(const UFunction* Function)
+bool ULuaFunction::IsOverridable(const UFunction *Function)
 {
     static constexpr uint32 FlagMask = FUNC_Native | FUNC_Event | FUNC_Net;
     static constexpr uint32 FlagResult = FUNC_Native | FUNC_Event;
     return Function->HasAnyFunctionFlags(FUNC_BlueprintEvent) || (Function->FunctionFlags & FlagMask) == FlagResult;
 }
 
-bool ULuaFunction::Override(UFunction* Function, UClass* Outer, FName NewName)
+bool ULuaFunction::Override(UFunction *Function, UClass *Outer, FName NewName)
 {
     UnLua::FLuaOverrides::Get().Override(Function, Outer, NewName);
     return true;
 }
 
-void ULuaFunction::RestoreOverrides(UClass* Class)
+void ULuaFunction::RestoreOverrides(UClass *Class)
 {
     UnLua::FLuaOverrides::Get().Restore(Class);
 }
 
-void ULuaFunction::SuspendOverrides(UClass* Class)
+void ULuaFunction::SuspendOverrides(UClass *Class)
 {
     UnLua::FLuaOverrides::Get().Suspend(Class);
 }
 
-void ULuaFunction::ResumeOverrides(UClass* Class)
+void ULuaFunction::ResumeOverrides(UClass *Class)
 {
     UnLua::FLuaOverrides::Get().Resume(Class);
 }
 
-void ULuaFunction::GetOverridableFunctions(UClass* Class, TMap<FName, UFunction*>& Functions)
+void ULuaFunction::GetOverridableFunctions(UClass *Class, TMap<FName, UFunction *> &Functions)
 {
     if (!Class)
         return;
@@ -107,11 +106,11 @@ void ULuaFunction::GetOverridableFunctions(UClass* Class, TMap<FName, UFunction*
     // all 'BlueprintEvent'
     for (TFieldIterator<UFunction> It(Class, EFieldIteratorFlags::IncludeSuper, EFieldIteratorFlags::ExcludeDeprecated, EFieldIteratorFlags::IncludeInterfaces); It; ++It)
     {
-        UFunction* Function = *It;
+        UFunction *Function = *It;
         if (!IsOverridable(Function))
             continue;
         FName FuncName = Function->GetFName();
-        UFunction** FuncPtr = Functions.Find(FuncName);
+        UFunction **FuncPtr = Functions.Find(FuncName);
         if (!FuncPtr)
             Functions.Add(FuncName, Function);
     }
@@ -119,13 +118,13 @@ void ULuaFunction::GetOverridableFunctions(UClass* Class, TMap<FName, UFunction*
     // all 'RepNotifyFunc'
     for (int32 i = 0; i < Class->ClassReps.Num(); ++i)
     {
-        FProperty* Property = Class->ClassReps[i].Property;
+        FProperty *Property = Class->ClassReps[i].Property;
         if (!Property->HasAnyPropertyFlags(CPF_RepNotify))
             continue;
-        UFunction* Function = Class->FindFunctionByName(Property->RepNotifyFunc);
+        UFunction *Function = Class->FindFunctionByName(Property->RepNotifyFunc);
         if (!Function)
             continue;
-        UFunction** FuncPtr = Functions.Find(Property->RepNotifyFunc);
+        UFunction **FuncPtr = Functions.Find(Property->RepNotifyFunc);
         if (!FuncPtr)
             Functions.Add(Property->RepNotifyFunc, Function);
     }
@@ -136,12 +135,17 @@ void ULuaFunction::Initialize()
     Desc = MakeShared<FFunctionDesc>(this, nullptr);
 }
 
-void ULuaFunction::Override(UFunction* Function, UClass* Class, bool bAddNew)
+void ULuaFunction::Override(UFunction *Function, UClass *Class, bool bAddNew)
 {
     check(Function && Class && !From.IsValid());
 
 #if WITH_METADATA
+    // UE 5.7 moved CopyMetadata from UMetaData to FMetaData
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 7
+    FMetaData::CopyMetadata(Function, this);
+#else
     UMetaData::CopyMetadata(Function, this);
+#endif
 #endif
 
     bActivated = false;
@@ -160,7 +164,7 @@ void ULuaFunction::Override(UFunction* Function, UClass* Class, bool bAddNew)
         const auto DestName = FString::Printf(TEXT("%s__Overridden"), *Function->GetName());
         if (Function->HasAnyFunctionFlags(FUNC_Native))
             GetOuterUClass()->AddNativeFunction(*DestName, *Function->GetNativeFunc());
-        Overridden = static_cast<UFunction*>(StaticDuplicateObject(Function, GetOuter(), *DestName));
+        Overridden = static_cast<UFunction *>(StaticDuplicateObject(Function, GetOuter(), *DestName));
         Overridden->ClearInternalFlags(EInternalObjectFlags::Native);
         Overridden->StaticLink(true);
         Overridden->SetNativeFunc(Function->GetNativeFunc());
@@ -188,7 +192,7 @@ void ULuaFunction::Restore()
     }
 }
 
-UClass* ULuaFunction::GetOverriddenUClass() const
+UClass *ULuaFunction::GetOverriddenUClass() const
 {
     const auto OverridesClass = Cast<ULuaOverridesClass>(GetOuter());
     return OverridesClass ? OverridesClass->GetOwner() : nullptr;
@@ -206,7 +210,7 @@ void ULuaFunction::SetActive(const bool bActive)
     const auto Class = Cast<ULuaOverridesClass>(GetOuter())->GetOwner();
     if (!Class)
         return;
-    
+
     if (bActive)
     {
         if (bAdded)
@@ -233,10 +237,10 @@ void ULuaFunction::SetActive(const bool bActive)
             Function->SetNativeFunc(&execScriptCallLua);
             Function->GetOuterUClass()->AddNativeFunction(*Function->GetName(), &execScriptCallLua);
             Function->Script.Empty();
-            Function->Script.AddUninitialized(ScriptMagicHeaderSize + sizeof(ULuaFunction*));
+            Function->Script.AddUninitialized(ScriptMagicHeaderSize + sizeof(ULuaFunction *));
             const auto Data = Function->Script.GetData();
             FPlatformMemory::Memcpy(Data, ScriptMagicHeader, ScriptMagicHeaderSize);
-            FPlatformMemory::WriteUnaligned<ULuaFunction*>(Data + ScriptMagicHeaderSize, this);
+            FPlatformMemory::WriteUnaligned<ULuaFunction *>(Data + ScriptMagicHeaderSize, this);
         }
     }
     else
@@ -256,7 +260,7 @@ void ULuaFunction::SetActive(const bool bActive)
             Function->FunctionFlags = Overridden->FunctionFlags;
         }
     }
-    
+
     bActivated = bActive;
 }
 
@@ -270,7 +274,7 @@ void ULuaFunction::FinishDestroy()
     UFunction::FinishDestroy();
 }
 
-UFunction* ULuaFunction::GetOverridden() const
+UFunction *ULuaFunction::GetOverridden() const
 {
     return Overridden;
 }

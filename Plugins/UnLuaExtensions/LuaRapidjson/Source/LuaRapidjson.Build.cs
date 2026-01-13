@@ -27,7 +27,11 @@ public class LuaRapidjson : ModuleRules
 #endif
         bUseUnity = false;
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+#if UE_5_7_OR_LATER
+        CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Off;
+#else
         bEnableUndefinedIdentifierWarnings = false;
+#endif
         bEnableExceptions = true;
 
         PublicDependencyModuleNames.AddRange(

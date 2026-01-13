@@ -27,7 +27,11 @@ public class LuaSocket : ModuleRules
 #endif
         bUseUnity = false;
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+#if UE_5_7_OR_LATER
+        CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Off;
+#else
         bEnableUndefinedIdentifierWarnings = false;
+#endif
 
         PublicDependencyModuleNames.AddRange(
             new[]
@@ -52,6 +56,17 @@ public class LuaSocket : ModuleRules
                 "LUA_LIB"
             }
         );
+
+        if (Target.Platform == UnrealTargetPlatform.Win64)
+        {
+            PrivateDefinitions.AddRange(
+                new[]
+                {
+                    "_CRT_SECURE_NO_WARNINGS",      // Suppress sprintf/sscanf deprecation warnings
+                    "_WINSOCK_DEPRECATED_NO_WARNINGS" // Suppress inet_ntoa/gethostbyname deprecation warnings
+                }
+            );
+        }
         
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "src"));
     }

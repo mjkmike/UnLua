@@ -7,11 +7,16 @@
 * 9/11/1999
 \*=========================================================================*/
 
+/* Suppress MSVC deprecation warnings for legacy socket/CRT functions */
+#ifdef _MSC_VER
+#pragma warning(disable : 4996) // 'function': This function or variable may be unsafe
+#endif
+
 /*-------------------------------------------------------------------------* \
 * Current socket library version
 \*-------------------------------------------------------------------------*/
-#define LUASOCKET_VERSION    "LuaSocket 3.0-rc1"
-#define LUASOCKET_COPYRIGHT  "Copyright (C) 1999-2013 Diego Nehab"
+#define LUASOCKET_VERSION "LuaSocket 3.0-rc1"
+#define LUASOCKET_COPYRIGHT "Copyright (C) 1999-2013 Diego Nehab"
 
 /*-------------------------------------------------------------------------*\
 * This macro prefixes all exported API functions
@@ -20,7 +25,7 @@
 #ifdef _WIN32
 #define LUASOCKET_API __declspec(dllexport)
 #else
-#define LUASOCKET_API __attribute__ ((visibility ("default")))
+#define LUASOCKET_API __attribute__((visibility("default")))
 #endif
 
 #include "lua.hpp"
