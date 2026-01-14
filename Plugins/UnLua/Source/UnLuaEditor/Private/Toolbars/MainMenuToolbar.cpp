@@ -110,9 +110,6 @@ void FMainMenuToolbar::Initialize()
     FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
     LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(Extender);
 #endif
-    const auto& Settings = *GetDefault<UUnLuaEditorSettings>();
-    if (Settings.UpdateMode == EUpdateMode::Start)
-        UUnLuaEditorFunctionLibrary::FetchNewVersion();
 }
 
 TSharedRef<SWidget> FMainMenuToolbar::GenerateUnLuaSettingsMenu()
