@@ -1,5 +1,3 @@
-local Input = UnLua.Input
-
 local M = {}
 
 local function MakeBinding(BindingClass, Args)
