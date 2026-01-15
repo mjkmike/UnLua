@@ -79,7 +79,7 @@ void FUnLuaIntelliSenseGenerator::UpdateAll()
 
     TotalCount++;
 
-    FScopedSlowTask SlowTask(TotalCount, LOCTEXT("GeneratingBlueprintsIntelliSense", "Generating Blueprints InstelliSense"));
+    FScopedSlowTask SlowTask(TotalCount, LOCTEXT("GeneratingBlueprintsIntelliSense", "Generating Blueprints IntelliSense"));
     SlowTask.MakeDialog();
 
     for (int32 i = 0; i < BlueprintAssets.Num(); i++)
